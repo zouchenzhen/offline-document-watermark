@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8').replace(/\r\n?/g,'\n'),base64=p=>fs.readFileSync(path.join(root,p)).toString('base64'),text64=p=>Buffer.from(read(p)).toString('base64');
-const assets={};for(const folder of ['cmaps','standard_fonts','wasm'])for(const name of fs.readdirSync(path.join(root,'vendor/pdfjs',folder))){if(name.startsWith('LICENSE'))continue;const p=path.join('vendor/pdfjs',folder,name);if(fs.statSync(path.join(root,p)).isFile())assets[folder+'/'+name]=base64(p);}
+const assets={};for(const folder of ['cmaps','standard_fonts','wasm'])for(const name of fs.readdirSync(path.join(root,'vendor/pdfjs',folder)).sort()){if(name.startsWith('LICENSE'))continue;const p=path.join('vendor/pdfjs',folder,name);if(fs.statSync(path.join(root,p)).isFile())assets[folder+'/'+name]=base64(p);}
 const sampleInfo=JSON.parse(read('docs/examples/demo-sizes.json'));const samples=sampleInfo.map(s=>({...s,jpeg:base64('docs/examples/'+s.file)}));
-const licenses={MIT:read('LICENSE'),'PDF.js':read('vendor/pdfjs/LICENSE')};for(const folder of ['cmaps','standard_fonts','wasm','iccs'])for(const name of fs.readdirSync(path.join(root,'vendor/pdfjs',folder)))if(name.startsWith('LICENSE'))licenses[folder+'/'+name]=read('vendor/pdfjs/'+folder+'/'+name);
+const licenses={MIT:read('LICENSE'),'PDF.js':read('vendor/pdfjs/LICENSE')};for(const folder of ['cmaps','standard_fonts','wasm','iccs'])for(const name of fs.readdirSync(path.join(root,'vendor/pdfjs',folder)).sort())if(name.startsWith('LICENSE'))licenses[folder+'/'+name]=read('vendor/pdfjs/'+folder+'/'+name);
 const bundle={core:text64('src/core.mjs'),pdf:text64('vendor/pdfjs/pdf.min.mjs'),worker:text64('vendor/pdfjs/pdf.worker.min.mjs'),assets,samples,licenses};
 const escape=s=>s.replace(/<\/script/gi,'<\\/script');
 const html=read('src/index.template.html').replace('/*__CSS__*/',read('src/style.css')).replace('/*__BUNDLE__*/',JSON.stringify(bundle)).replace('/*__APP__*/',escape(read('src/app.mjs')));
