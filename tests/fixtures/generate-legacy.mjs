@@ -37,4 +37,3 @@ await fs.writeFile(path.join(root,'legacy-v0.2.0.rgba.zlib'),deflateSync(data));
 const hashes={};for(const name of ['legacy-v0.2.0.pdf','legacy-v0.2.0.png','legacy-v0.2.0.rgba.zlib'])hashes[name]=createHash('sha256').update(await fs.readFile(path.join(root,name))).digest('hex');
 await fs.writeFile(path.join(root,'legacy-v0.2.0.json'),JSON.stringify({tag:'v0.2.0',commit,source:'src/core.mjs',sourceSha256:expectedHash,width,height,metadata,hashes},null,2)+'\n');
 console.log('Generated frozen v0.2.0 PDF, PNG, and pixel fixtures from synthetic data.');
-
