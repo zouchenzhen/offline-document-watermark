@@ -1,0 +1,75 @@
+name: Validate candidate and deploy isolated preview
+on:
+  push:
+    branches: [hardening-v0.3.0]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+        working-directory: candidate
+      - run: npm run test:pdf
+        working-directory: candidate
+      - run: npm run build
+        working-directory: candidate
+      - run: npm run package
+        working-directory: candidate
+      - run: npm run build
+        working-directory: stable
+      - name: Keep stable root and publish candidate under preview
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const version=JSON.parse(fs.readFileSync('candidate/package.json','utf8')).version;
+          if(!/^\d+\.\d+\.\d+$/.test(version))throw Error('Invalid version');
+          fs.cpSync('stable/dist/site','site',{recursive:true});
+          const preview=path.join('site','preview','v'+version);
+          fs.mkdirSync(preview,{recursive:true});
+          fs.cpSync('candidate/dist/site',preview,{recursive:true});
+          for(const name of ['index.html']){
+            const target=path.join(preview,name);
+            // Only the preview index has a banner; downloadable HTML stays exact.
+            let html=fs.readFileSync(target,'utf8');
+            html=html.replace('<body><main>','<body><main><p class="warning">候选预览版：用于公开样本验收，尚未正式发布。 <a href="../../">返回稳定版</a></p>');
+            fs.writeFileSync(target,html);
+          }
+          JS
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-release
+          path: |
+            candidate/dist/offline-watermark-*.html
+            candidate/dist/offline-watermark-*.zip
+            candidate/dist/SHA256SUMS.txt
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}preview/v0.3.0/
+    steps:
+      - name: Deploy stable plus preview
+        id: deployment
+        uses: actions/deploy-pages@v4
