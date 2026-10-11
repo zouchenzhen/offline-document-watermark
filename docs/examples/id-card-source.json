@@ -1,0 +1,21 @@
+{
+  "checkedOn": "2026-10-12",
+  "source": "Wikimedia Commons official imageinfo API",
+  "queryUrl": "https://commons.wikimedia.org/w/api.php?action=query&titles=File:The_People%27s_Republic_of_China_resident_identity_card_(SAMPLE).png&prop=imageinfo&iiprop=url%7Csha1%7Csize%7Cextmetadata&format=json",
+  "pageId": 27656974,
+  "fileTitle": "File:The People's Republic of China resident identity card (SAMPLE).png",
+  "descriptionUrl": "https://commons.wikimedia.org/wiki/File:The_People%27s_Republic_of_China_resident_identity_card_(SAMPLE).png",
+  "artist": "Discovery23",
+  "artistUrl": "https://commons.wikimedia.org/wiki/User:Discovery23",
+  "credit": "http://www.mps.gov.cn/n16/index.html",
+  "date": "2013-08-11",
+  "licenseShortName": "Public domain",
+  "license": "pd",
+  "category": "PD-PRC-exempt",
+  "attributionRequired": false,
+  "permissionBasis": "The source page cites Article 5 of the Copyright Law of the People's Republic of China.",
+  "upstreamWidth": 1019,
+  "upstreamHeight": 1294,
+  "upstreamSha1": "ff72b562ae7650ce32717eedc7f8cf52e34b3bc7",
+  "repositoryCopy": "Resized and re-encoded for this demonstration; not byte-identical to the upstream PNG."
+}

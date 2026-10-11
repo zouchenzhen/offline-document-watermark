@@ -1,6 +1,6 @@
 {
- "name":"offline-document-watermark","version":"0.2.0","private":true,"type":"module","license":"MIT",
- "scripts":{"build":"node scripts/build.mjs","test":"node --test tests/core.test.mjs"},
+ "name":"offline-document-watermark","version":"0.3.0","private":true,"type":"module","license":"MIT",
+ "scripts":{"build":"node scripts/build.mjs","package":"node scripts/package-release.mjs","test":"node --check src/app.mjs && node --test tests/*.test.mjs","test:pdf":"node tests/pdf-resources.mjs"},
  "engines":{"node":">=22.13"},
  "description":"Private image/PDF watermarking with a self-contained offline HTML release."
 }

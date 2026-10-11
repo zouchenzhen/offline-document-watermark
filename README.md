@@ -3,7 +3,7 @@
 在浏览器中给图片和 PDF 添加用途水印，导出适合发送的 PNG、JPEG 或多页图片型 PDF。提供 GitHub Pages 在线版和单文件离线版，处理文件时不上传、不联网。
 
 - **在线使用：** https://zouchenzhen.github.io/offline-document-watermark/
-- **下载离线文件：** [Releases](https://github.com/zouchenzhen/offline-document-watermark/releases)，下载 `offline-watermark-v0.2.0.html` 后双击打开。
+- **下载离线文件：** [Releases](https://github.com/zouchenzhen/offline-document-watermark/releases)，下载对应版本的 HTML 文件后双击打开。
 - **源码：** 本仓库 `src/`；原创代码使用 MIT，方便分发、复用和贡献。
 
 ## 适合什么场景
@@ -14,7 +14,7 @@
 
 ## 示例结果
 
-示例一使用明确标记 SAMPLE 的身份证模板，不是真实身份证。示例二基于 16Personalities 页面截图，已将类型和百分比替换为虚构演示内容。示例素材不自动适用代码的 MIT 许可，见 [素材说明](docs/examples/ATTRIBUTION.md)。
+示例一使用明确标记 SAMPLE 的身份证模板，不是真实身份证；其公共领域状态已用 Commons 官方元数据核实。示例二保留 16Personalities 截图的通用版式，当前演示已将类型、百分比、人物插画及类型色组改成虚构数据和原创中性图形。示例素材不自动适用代码的 MIT 许可，见 [素材说明](docs/examples/ATTRIBUTION.md)。
 
 ![身份证样本的重复水印效果](docs/examples/id-card-watermarked.png)
 
@@ -45,15 +45,16 @@
 6. 保存 PNG、JPEG 或多页 PDF。图片只保存当前预览页；PDF 保存选定页。
 7. 下载追踪记录，自己保管接收方与编号的对应关系。关闭页面后，本工具不会替你保存这些记录。
 
-导入已经加了水印的 PDF 时，本工具会绘制其页面外观；不提取无水印原图。额外可见水印必须填写；如仅需转换已有水印 PDF，可用 Acrobat 的整页图片导出或图像打印功能。
+导入已经加了水印的 PDF 时，选择 **“仅合成发送版”**，可以不新增可见文字，保留原页面外观并输出图片型 PDF。此模式不提取或识别原有水印文字；用途说明可留空，仅在勾选元信息时记录补充说明。
 
 ## 功能
 
-| 功能 | v0.2.0 |
+| 功能 | 当前实现（v0.3.0 验证中） |
 |---|---|
 | PNG/JPEG/WebP 输入 | 支持，最多 30 张 |
 | 多页 PDF 输入 | 支持，最多 100 页；加密 PDF 暂不支持 |
 | 重复、多行用途水印 | 支持 |
+| 仅合成发送版、保留已有页面外观 | 支持，不要求额外水印文字 |
 | 水印密度、颜色、角度、字号、不透明度 | 支持 |
 | 整页、半页、自定义矩形覆盖 | 支持 |
 | PNG/JPEG 图片导出 | 支持，当前页 |
@@ -72,7 +73,7 @@ GitHub Pages 会看到首次网页访问的普通日志；这与选入文件的�
 
 可见水印成为图片像素，输出 PDF 不保留独立水印文字和无水印原图。这能阻止普通对象删除，但不能保证抵抗裁剪、修图或 AI 去水印。
 
-隐藏标记使用公开、无密钥的中频 DCT 投影编码，包含追踪编号和 CRC。它不是密码学签名；可被伪造或针对性去除。元信息也可被删除。**不得把检出的编号单独当作传播者身份或法证证明。**
+隐藏标记使用公开、无密钥的中频 DCT 投影编码，包含追踪编号和 CRC。当前实现限制每个 RGB 通道的改动最多为 10，并在嵌入后即时自检；JPEG/PDF 还会对实际压缩字节读回验证。若不能确认标记，停止下载并提示调整设置，不静默声称成功。它仍不是密码学签名；可被伪造或针对性去除。元信息也可被删除。**不得把检出的编号单独当作传播者身份或法证证明。**
 
 当前两张文档示例在 JPEG 质量 92/80/60 导出后检出了编号；这仅是样本测试结果，不是对所有压缩器、素材或处理方式的保证。缩放测试导致标记丢失。实际结果见 [测试记录](docs/examples/marker-test-results.json)。
 
@@ -82,13 +83,16 @@ GitHub Pages 会看到首次网页访问的普通日志；这与选入文件的�
 
 ```sh
 npm test
+npm run test:pdf
 npm run build
+npm run package
 ```
 
 输出：
 
-- `dist/offline-watermark-v0.2.0.html`：可双击使用的自包含 HTML。
-- `dist/SHA256SUMS.txt`：离线文件的 SHA-256。
+- `dist/offline-watermark-v<版本>.html`：可双击使用的自包含 HTML。
+- `dist/offline-watermark-v<版本>.zip`：可复现打包的 HTML、许可和隐私说明。
+- `dist/SHA256SUMS.txt`：打包后同时校验 HTML 和 ZIP；ZIP 内部清单只校验 HTML，避免循环。
 - `dist/site/`：可部署到 GitHub Pages 的静态内容。
 
 仓库包含 Pages 工作流；main 分支推送后构建并部署。在线页和离线页使用相同实现。下载后可以用系统工具核对 SHA-256。
@@ -98,6 +102,8 @@ npm run build
 纯函数测试涵盖页码范围、尺寸限制、追踪格式、隐藏标记嵌入/检测/缩放失效、PNG/JPEG 元信息、PDF 页结构和密度控制。另用两张示例检查真实 PNG/JPEG 编解码、JPEG 压缩后检测、PDF.js 多页解析，以及严格 PDF 读取器的输出检查。
 
 浏览器与移动端交互验证记录见 [docs/VALIDATION.md](docs/VALIDATION.md)。不能把算法测试当成所有浏览器兼容性已验证。
+
+v0.3.0 的验收状态见 [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md)。新增回归测试覆盖异步文件状态、预览失败、逐页解码、压缩后追踪检查，以及实际 PDF.js 的标准字体、CMYK ICC、JPEG/JPEG2000 解码资源。这些 Node 检查不能代替新版真实浏览器 Worker 和手机实机验证。
 
 预览最长边限制约 1100 像素；保存时按设置重新渲染。每页输出最多约 2400 万像素，特别长的页面也受浏览器画布尺寸限制。PNG 无损；JPEG 和图片型 PDF 有损。PDF 输出不保留 OCR、可编辑文本、表单或数字签名。
 
