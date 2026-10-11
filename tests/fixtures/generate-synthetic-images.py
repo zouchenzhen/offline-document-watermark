@@ -17,4 +17,3 @@ draw.rectangle((17, 163, 367, 212), outline=(0, 0, 0))
 draw.text((18, 233), "JPEG / JPEG2000 decoder fixture", fill="black", font=font)
 image.save(root / "synthetic-scan.jpg", quality=92, subsampling=0, optimize=False)
 image.save(root / "synthetic-scan.jp2", format="JPEG2000", irreversible=False)
-

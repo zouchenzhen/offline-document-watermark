@@ -41,4 +41,3 @@ for(const [suffix,filter,label] of [['jpg','DCTDecode','JPEG'],['jp2','JPXDecode
  await fs.writeFile(path.join(root,suffix==='jpg'?'synthetic-jpeg-scan.pdf':'synthetic-jpeg2000.pdf'),pdf([catalog,pages,page('/XObject << /Im0 6 0 R >>'),stream('',content),font,imageObject]));
 }
 console.log('Generated four synthetic PDF fixtures.');
-
