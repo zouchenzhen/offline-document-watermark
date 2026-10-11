@@ -12,6 +12,14 @@ from the project's bundled, licensed standard fonts.
   retained `vendor/pdfjs/iccs/LICENSE`.
 - `synthetic-jpeg2000.pdf`: the same original illustration encoded as lossless
   JPEG2000, using a JPXDecode image stream.
+- `legacy-v0.2.0.pdf`, `.png` and `.rgba.zlib`: frozen compatibility fixtures
+  generated from original synthetic data using `src/core.mjs` at the published
+  `v0.2.0` commit `252fc01a38c2cd3caccda2f16e5a7f8b595a3f20`. The PDF uses the
+  original fictional scan above; the PNG is an original gradient/grid texture.
+  They contain fixed Unicode demo metadata and the old hidden-marker algorithm.
+  `legacy-v0.2.0.json` records source and artifact SHA-256 values. To recreate
+  them, run `node tests/fixtures/generate-legacy.mjs` with that commit available
+  locally. This does not depend on the mutable public example images.
 
 The original raster drawing and fixture-generation code follow the project's
 MIT license. To recreate the rasters, install Pillow and run

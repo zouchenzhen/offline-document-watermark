@@ -26,14 +26,14 @@
 
 以下是在线版的实际操作界面，使用公开身份证样本和演示追踪编号：
 
-![实际操作界面](docs/interface-desktop.jpg)
+![v0.3 实际操作界面](docs/interface-desktop-v0.3.jpg)
 
 窄屏布局采用单列，并提供设置与预览的快捷跳转。窄屏截图是桌面 Chromium 的尺寸模拟，不是手机实机认证。
 
 <details>
 <summary>查看窄屏预览界面</summary>
 
-![窄屏预览界面](docs/interface-mobile.jpg)
+![v0.3 窄屏预览界面](docs/interface-mobile-v0.3.jpg)
 
 </details>
 
@@ -49,7 +49,7 @@
 
 ## 功能
 
-| 功能 | 当前实现（v0.3.0 验证中） |
+| 功能 | v0.3.0 |
 |---|---|
 | PNG/JPEG/WebP 输入 | 支持，最多 30 张 |
 | 多页 PDF 输入 | 支持，最多 100 页；加密 PDF 暂不支持 |
@@ -105,7 +105,7 @@ npm run package
 
 浏览器与移动端交互验证记录见 [docs/VALIDATION.md](docs/VALIDATION.md)。不能把算法测试当成所有浏览器兼容性已验证。
 
-v0.3.0 的验收状态见 [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md)。新增回归测试覆盖异步文件状态、预览失败、逐页解码、压缩后追踪检查，以及实际 PDF.js 的标准字体、CMYK ICC、JPEG/JPEG2000 解码资源。这些 Node 检查不能代替新版真实浏览器 Worker 和手机实机验证。
+v0.3.0 的验收状态见 [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md)。回归测试覆盖异步文件状态、预览失败、逐页解码、压缩后追踪检查、确定性构建与打包，以及实际 PDF.js 的字体、CMYK ICC、JPEG/JPEG2000资源。真实 Chromium 候选页已通过 Worker、断网渲染、文件下载、编号读回、仅合成和85MB虚构PDF检查；独立Chrome/Edge、手机实机和直接双击本地HTML仍未覆盖。
 
 预览最长边限制约 1100 像素；保存时按设置重新渲染。每页输出最多约 2400 万像素，特别长的页面也受浏览器画布尺寸限制。PNG 无损；JPEG 和图片型 PDF 有损。PDF 输出不保留 OCR、可编辑文本、表单或数字签名。
 

@@ -1,0 +1,21 @@
+{
+  "tag": "v0.2.0",
+  "commit": "252fc01a38c2cd3caccda2f16e5a7f8b595a3f20",
+  "source": "src/core.mjs",
+  "sourceSha256": "8b0120962162df268b145b4a9fb443cd0e0b38daf6b895ddfe40b3f6adf77ca5",
+  "width": 256,
+  "height": 256,
+  "metadata": {
+    "tool": "Offline Document Watermark",
+    "version": "0.2.0",
+    "traceId": "12AB34CD56EF7890",
+    "watermark": "仅供虚构示例审核\n其他用途无效",
+    "createdAt": "2026-10-11T00:00:00.000Z",
+    "hiddenMarker": "experimental-dct-v1"
+  },
+  "hashes": {
+    "legacy-v0.2.0.pdf": "1010a2be6faa5cfaa0232ea2c1f5212a697653d32ea68b80a3b9909da5e21e2a",
+    "legacy-v0.2.0.png": "12f61529b34dd1fa6b35425712073ce50cf60e310ce7859e08e79aaf1c16f44f",
+    "legacy-v0.2.0.rgba.zlib": "25844d94e2f434c46365b6b12e86ed72ec3ab4e9ea2dc2a64faa4faa17cb41b5"
+  }
+}

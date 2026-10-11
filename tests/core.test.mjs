@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import * as c from '../src/core.mjs';
 import fs from 'node:fs';import {largePdfFixture} from './large-pdf-fixture.mjs';
+import {inflateSync} from 'node:zlib';import {createHash} from 'node:crypto';
 const trace='12AB34CD56EF7890',meta={tool:'Offline Document Watermark',traceId:trace,watermark:'仅供示例审核\n其他用途无效'};
 function pixels(w=512,h=512){const data=new Uint8ClampedArray(w*h*4);for(let i=0;i<data.length;i+=4){data[i]=210;data[i+1]=195;data[i+2]=180;data[i+3]=255;}return {width:w,height:h,data};}
 test('page ranges are validated, deduplicated and sorted',()=>{assert.deepEqual(c.parsePages('1-3,5,2',5),[1,2,3,5]);assert.deepEqual(c.parsePages('',2),[1,2]);for(const s of ['0','3-1','6','abc','1,'])assert.throws(()=>c.parsePages(s,5));});
@@ -23,7 +24,17 @@ test('large own PDFs inspect bounded headers and return the first JPEG as a shar
  assert.deepEqual(own.metadata,meta);assert.deepEqual(own.jpeg,fixture.jpeg);assert.equal(own.jpeg.buffer,fixture.bytes.buffer);assert(own.jpeg.byteOffset>fixture.bytes.byteOffset);assert(Math.max(...decoded)<=65536);
 });
 test('PDF inspection keeps old release compatibility and rejects damaged xref tails',()=>{
- const old=new Uint8Array(fs.readFileSync(new URL('../docs/examples/two-page-watermarked.pdf',import.meta.url))),own=c.inspectOwnPdf(old);assert.equal(own.metadata.traceId,trace);assert.equal(own.jpeg[0],255);assert.equal(own.jpeg[1],216);
+ const fixture=JSON.parse(fs.readFileSync(new URL('./fixtures/legacy-v0.2.0.json',import.meta.url))),old=new Uint8Array(fs.readFileSync(new URL('./fixtures/legacy-v0.2.0.pdf',import.meta.url))),own=c.inspectOwnPdf(old);
+ assert.equal(createHash('sha256').update(old).digest('hex'),fixture.hashes['legacy-v0.2.0.pdf']);assert.deepEqual(own.metadata,fixture.metadata);assert.equal(own.metadata.version,'0.2.0');assert.equal(own.jpeg[0],255);assert.equal(own.jpeg[1],216);
  assert.deepEqual(c.inspectOwnPdf(old.subarray(0,old.length-20)),{metadata:null,jpeg:null});
  assert.deepEqual(c.inspectOwnPdf(c.utf8('%PDF-1.4\nxref\n0 999999\nstartxref\n9\n%%EOF\n')),{metadata:null,jpeg:null});
+});
+test('frozen v0.2.0 synthetic PNG metadata and old-algorithm pixel marker stay readable',()=>{
+ const fixture=JSON.parse(fs.readFileSync(new URL('./fixtures/legacy-v0.2.0.json',import.meta.url))),png=new Uint8Array(fs.readFileSync(new URL('./fixtures/legacy-v0.2.0.png',import.meta.url))),pixelZip=fs.readFileSync(new URL('./fixtures/legacy-v0.2.0.rgba.zlib',import.meta.url));
+ assert.equal(createHash('sha256').update(png).digest('hex'),fixture.hashes['legacy-v0.2.0.png']);assert.equal(createHash('sha256').update(pixelZip).digest('hex'),fixture.hashes['legacy-v0.2.0.rgba.zlib']);assert.deepEqual(c.readMetadata(png),fixture.metadata);
+ const decoded=inflateSync(pixelZip),image={width:fixture.width,height:fixture.height,data:new Uint8ClampedArray(decoded)};assert.equal(c.detectTrace(image).traceId,trace);
+ // Decode our simple RGBA/filter-0 PNG using only zlib, so the fixed PNG and
+ // marker test share the actual pixel data without a mocked browser codec.
+ let at=8;const idat=[];while(at+12<=png.length){const view=new DataView(png.buffer,png.byteOffset+at,4),length=view.getUint32(0);if(new TextDecoder().decode(png.subarray(at+4,at+8))==='IDAT')idat.push(png.subarray(at+8,at+8+length));at+=length+12;}
+ const rows=inflateSync(Buffer.concat(idat)),pixels=new Uint8ClampedArray(decoded.length);for(let y=0;y<fixture.height;y++){assert.equal(rows[y*(1+fixture.width*4)],0);pixels.set(rows.subarray(y*(1+fixture.width*4)+1,(y+1)*(1+fixture.width*4)),y*fixture.width*4);}assert.deepEqual(pixels,image.data);assert.equal(c.detectTrace({width:fixture.width,height:fixture.height,data:pixels}).traceId,trace);
 });
