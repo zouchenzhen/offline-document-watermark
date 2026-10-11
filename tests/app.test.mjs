@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import * as realCore from '../src/core.mjs';
 import * as workerAssets from '../src/worker-assets.mjs';
+import {largePdfFixture} from './large-pdf-fixture.mjs';
 
 // Exercise the actual app event handlers with a deterministic DOM/PDF adapter.
 // This covers state transitions, not real-browser codec or layout compatibility.
@@ -23,7 +24,7 @@ async function app(overrides={}){
  class ReviewURL extends URL{static createObjectURL(blob){const key='blob:review-'+(++blobId);blobs.set(key,blob);return key;}static revokeObjectURL(key){blobs.delete(key);}}
  const core={...realCore,paintWatermark(...args){counts.paint++;return realCore.paintWatermark(...args);},embedTrace(...args){counts.embed++;return overrides.embedTrace?overrides.embedTrace(...args):args[0];},detectTrace(...args){counts.detect++;return overrides.detectTrace?overrides.detectTrace(...args):null;}};
  const transformed=source.replace("const coreUrl=moduleUrl(bundle.core),core=await import(coreUrl);URL.revokeObjectURL(coreUrl);",'const core=__core;')
-  .replace('lib=await import(url)','lib=__pdfLibrary').replace('{workerPrelude}=await import(bridgeUrl)','{workerPrelude}=__workerAssets').replace('const MAX_OUTPUT_BYTES=160*1024*1024;','const MAX_OUTPUT_BYTES=__outputLimit;');
+  .replace('lib=await import(url)','lib=__pdfLibrary').replace('{workerPrelude}=await import(bridgeUrl)','{workerPrelude}=__workerAssets').replace('const MAX_OUTPUT_BYTES=MAX_FILE_BYTES;','const MAX_OUTPUT_BYTES=__outputLimit;');
  const sandbox={document,location:{protocol:'https:'},crypto:globalThis.crypto,URL:ReviewURL,Blob,atob,Uint8Array,Uint8ClampedArray,TextDecoder,console,Image:class {constructor(){this.naturalWidth=overrides.imageWidth||512;this.naturalHeight=overrides.imageHeight||512;}async decode(){counts.decoded++;counts.liveImages++;counts.maxLiveImages=Math.max(counts.maxLiveImages,counts.liveImages);this.loaded=true;}removeAttribute(name){if(name==='src'&&this.loaded){counts.released++;counts.liveImages--;this.loaded=false;}}},Worker:class {constructor(url,options){this.options=options;workerScripts.push(blobs.get(url));}},__core:core,__workerAssets:workerAssets,__pdfLibrary:overrides.pdfLibrary,__outputLimit:overrides.outputLimit??160*1024*1024,
   setTimeout(fn,delay){const timer=setTimeout(fn,delay);if(delay===30000)timer.unref();return timer;},clearTimeout};
  await vm.runInContext('(async()=>{'+transformed+';globalThis.review={getState:()=>({total:total(),current,pdfDoc,pdfTask,sources,generation,busy,previewValid,lastRecords}),setPdf:(doc,task)=>{pdfDoc=doc;pdfTask=task;},setLibrary:p=>{pdfPromise=p;},cleanup,preview,showDemo,exportFiles,updateControls};})()',vm.createContext(sandbox));
@@ -102,7 +103,7 @@ test('30 large images retain source files and release each decoder before loadin
 });
 test('oversized cumulative files are refused before decoding without reducing 30-image count',async()=>{
  const a=await app(),input=a.get('file');input.files=Array.from({length:3},(_,i)=>({name:'fixture-'+i+'.png',type:'image/png',size:60*1024*1024}));
- await input.listeners.change({target:input});assert.match(a.get('status').textContent,/本次文件总量超过 160 MB/);assert.equal(a.counts.decoded,0);assert.equal(a.review.getState().total,0);assert.equal(a.get('file').disabled,false);
+ await input.listeners.change({target:input});assert.match(a.get('status').textContent,/本次文件总量超过 160 MiB/);assert.equal(a.counts.decoded,0);assert.equal(a.review.getState().total,0);assert.equal(a.get('file').disabled,false);
 });
 test('an image over the single-image pixel limit releases its decoder before reporting failure',async()=>{
  const a=await app({imageWidth:8000,imageHeight:6000}),input=a.get('file');input.files=[{name:'fixture.png',type:'image/png',size:100}];
@@ -132,7 +133,21 @@ test('PDF worker is self-contained and all parser resource URLs stay on the embe
  assert.equal(a.workerScripts.length,1);const workerCode=await a.workerScripts[0].text();assert(workerCode.startsWith(workerAssets.workerPrelude(a.resources)));assert(workerCode.endsWith('// fixture PDF worker'));assert.equal(lib.GlobalWorkerOptions.workerPort.options.type,'module');
 });
 test('output resource gates stop oversized image, accumulated JPEG pages, and final PDF bytes',async()=>{
- const image=await app({outputLimit:64});await image.review.exportFiles('png');assert.equal(image.saved.length,0);assert.match(image.get('status').textContent,/输出文件超过 160 MB/);
+ const image=await app({outputLimit:64});await image.review.exportFiles('png');assert.equal(image.saved.length,0);assert.match(image.get('status').textContent,/输出文件超过 160 MiB/);
  const accumulated=await app({outputLimit:8});await importPdf(accumulated,pdfDoc({numPages:3}));await accumulated.review.exportFiles('pdf');assert.equal(accumulated.saved.length,0);assert.match(accumulated.get('status').textContent,/按页码分批导出/);assert.equal(accumulated.review.getState().busy,false);
  const final=await app({outputLimit:100});await final.review.exportFiles('pdf');assert.equal(final.saved.length,0);assert.match(final.get('status').textContent,/降低图片质量或输出最长边/);assert.equal(final.review.getState().lastRecords.length,0);
+});
+test('a generated PDF above 80 MiB and below 160 MiB can be imported and verified',async()=>{
+ const metadata={tool:'Offline Document Watermark',traceId:'12AB34CD56EF7890',watermark:'Synthetic fixture',hiddenMarker:null},fixture=largePdfFixture(metadata),a=await app();
+ assert(fixture.bytes.length>80*1024*1024&&fixture.bytes.length<160*1024*1024);
+ const file={name:'synthetic-large.pdf',type:'application/pdf',size:fixture.bytes.length,arrayBuffer:async()=>fixture.bytes.buffer};
+ a.review.setLibrary(library(pdfDoc({numPages:3})));const input=a.get('file');input.files=[file];await input.listeners.change({target:input});
+ assert.equal(a.review.getState().total,3);assert.match(a.get('status').textContent,/已在本地导入 3 页/);
+ const verify=a.get('verifyFile');verify.files=[file];await verify.listeners.change({target:verify});
+ assert.match(a.get('verification').textContent,/元信息编号：12AB34CD56EF7890/);assert.match(a.get('verification').textContent,/第一页/);assert.doesNotMatch(a.get('verification').textContent,/验证失败/);
+});
+test('import and verification reject a single file above the same 160 MiB limit without reading it',async()=>{
+ const a=await app();let reads=0;const file={name:'too-large.pdf',type:'application/pdf',size:160*1024*1024+1,arrayBuffer:async()=>{reads++;throw Error('must not read');}};
+ const input=a.get('file');input.files=[file];await input.listeners.change({target:input});assert.match(a.get('status').textContent,/单个文件超过 160 MiB/);
+ const verify=a.get('verifyFile');verify.files=[file];await verify.listeners.change({target:verify});assert.match(a.get('verification').textContent,/验证文件超过 160 MiB/);assert.equal(reads,0);
 });

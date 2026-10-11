@@ -7,7 +7,9 @@ $('licenses').textContent=Object.entries(bundle.licenses).map(([name,text])=>nam
 if(location.protocol==='file:'){$('offlineDownload').removeAttribute('href');$('offlineDownload').removeAttribute('download');$('offlineDownload').textContent='当前为离线文件';}
 if(!URL.parse)URL.parse=(url,base)=>{try{return new URL(url,base);}catch{return null;}};
 const canvas=$('canvas'),ctx=canvas.getContext('2d');
-const MAX_OUTPUT_BYTES=160*1024*1024;
+const MAX_FILE_BYTES=160*1024*1024;
+const MAX_OUTPUT_BYTES=MAX_FILE_BYTES;
+const MAX_INPUT_TOTAL_BYTES=MAX_FILE_BYTES;
 let sources=[],pdfDoc=null,pdfTask=null,current=0,generation=0,previewGeneration=0,pdfPromise=null,previewTimer=null,busy=false,previewValid=false,lastRecords=[],loadedDemo=true;
 function status(s,error=false){$('status').textContent=s;$('status').classList.toggle('error',error);}
 function freshTrace(){const b=crypto.getRandomValues(new Uint8Array(8));$('trace').value=[...b].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();}
@@ -54,7 +56,7 @@ async function preview(){
 }
 function schedulePreview(){previewValid=false;updateControls();clearTimeout(previewTimer);previewTimer=setTimeout(preview,140);}
 $('file').addEventListener('change',async e=>{
- const files=[...e.target.files];if(busy||!files.length)return;busy=true;updateControls();try{await cleanup();loadedDemo=false;const gen=generation;if(files.length>30)throw Error('一次最多导入 30 张图片。');if(files.some(f=>f.size>80*1024*1024))throw Error('单个文件超过 80 MB，请先减小文件。');if(files.reduce((sum,f)=>sum+f.size,0)>160*1024*1024)throw Error('本次文件总量超过 160 MB，请分批导入。');
+ const files=[...e.target.files];if(busy||!files.length)return;busy=true;updateControls();try{await cleanup();loadedDemo=false;const gen=generation;if(files.length>30)throw Error('一次最多导入 30 张图片。');if(files.some(f=>f.size>MAX_FILE_BYTES))throw Error('单个文件超过 160 MiB，请先减小文件。');if(files.reduce((sum,f)=>sum+f.size,0)>MAX_INPUT_TOTAL_BYTES)throw Error('本次文件总量超过 160 MiB，请分批导入。');
   const pdfs=files.filter(f=>f.type==='application/pdf'||/\.pdf$/i.test(f.name));if(pdfs.length){if(files.length!==1)throw Error('请选择一个 PDF，或多张图片；暂不混合导入。');status('正在本地解析 PDF…');await openPdf(new Uint8Array(await files[0].arrayBuffer()));
   }else{for(const f of files){if(!['image/png','image/jpeg','image/webp'].includes(f.type))throw Error('请选择 PNG、JPEG、WebP 或 PDF。');sources.push(await imageSource(f));}}
   if(gen!==generation)return;freshTrace();if(await preview())status(`已在本地导入 ${total()} 页。请检查页面外观和材料可辨认程度。`);
@@ -65,7 +67,7 @@ function save(bytes,type,name){const url=URL.createObjectURL(new Blob([bytes],{t
 function toBlob(c,type,quality){return new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(Error('浏览器无法导出这张图片，请减小尺寸。')),type,quality));}
 async function sha(bytes){if(!crypto.subtle)return null;const hash=new Uint8Array(await crypto.subtle.digest('SHA-256',bytes));return [...hash].map(x=>x.toString(16).padStart(2,'0')).join('');}
 async function verifyJpegTrace(bytes,traceId){const im=await decodeImage(new Blob([bytes],{type:'image/jpeg'})),c=document.createElement('canvas');try{c.width=im.naturalWidth;c.height=im.naturalHeight;const p=c.getContext('2d');p.drawImage(im,0,0);const mark=core.detectTrace(p.getImageData(0,0,c.width,c.height));if(mark?.traceId!==traceId)throw Error('JPEG 压缩后未能确认隐藏标记，已停止保存。请提高图片质量或输出尺寸，或关闭实验性隐藏标记后重试。');}finally{c.width=c.height=1;releaseImage(im);}}
-function checkOutputSize(size){if(size>MAX_OUTPUT_BYTES)throw Error('输出文件超过 160 MB，已停止保存。请降低图片质量或输出最长边，或按页码分批导出。');}
+function checkOutputSize(size){if(size>MAX_OUTPUT_BYTES)throw Error('输出文件超过 160 MiB，已停止保存。请降低图片质量或输出最长边，或按页码分批导出。');}
 async function exportFiles(format){
  if(busy||!total()||!previewValid)return;busy=true;clearTimeout(previewTimer);previewGeneration++;updateControls();
  try{const s=settings();if(s.mode!=='flatten'&&!s.text)throw Error('请输入用途水印。');const traceId=core.normalizeTrace($('trace').value),hidden=$('hiddenMark').checked,metadata=$('metadata').checked,quality=Number($('quality').value)/100,dpi=Number($('dpi').value),longSide=Number($('longSide').value),indices=format==='pdf'?core.parsePages($('pages').value,total()).map(n=>n-1):[current];if(indices.length>30)throw Error('一次最多导出 30 页，请分批选择页码。');
@@ -84,7 +86,7 @@ async function showPublicSamples(asPdf){if(busy)return;busy=true;updateControls(
 $('sampleImages').onclick=()=>showPublicSamples(false);$('samplePdf').onclick=()=>showPublicSamples(true);
 ['mode','text','density','opacity','size','angle','color','scope','rx','ry','rw','rh'].forEach(id=>$(id).addEventListener('input',schedulePreview));['dpi','longSide','quality','hiddenMark','metadata'].forEach(id=>$(id).addEventListener('input',updateControls));
 $('verifyFile').addEventListener('change',async e=>{
- const f=e.target.files[0];if(busy||!f)return;busy=true;updateControls();const box=$('verification');box.textContent='正在本地验证…';try{if(f.size>80*1024*1024)throw Error('验证文件超过 80 MB。');const bytes=new Uint8Array(await f.arrayBuffer()),isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name);let metadata,pixelBlob;
+ const f=e.target.files[0];if(busy||!f)return;busy=true;updateControls();const box=$('verification');box.textContent='正在本地验证…';try{if(f.size>MAX_FILE_BYTES)throw Error('验证文件超过 160 MiB。');const bytes=new Uint8Array(await f.arrayBuffer()),isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name);let metadata,pixelBlob;
   if(isPdf){const own=core.inspectOwnPdf(bytes);metadata=own.metadata;if(own.jpeg)pixelBlob=new Blob([own.jpeg],{type:'image/jpeg'});}else{metadata=core.readMetadata(bytes);pixelBlob=f;}
   let mark=null;if(pixelBlob){const im=await decodeImage(pixelBlob),c=document.createElement('canvas');try{if(im.naturalWidth*im.naturalHeight>24000000)throw Error('验证图片超过 2400 万像素。');c.width=im.naturalWidth;c.height=im.naturalHeight;const p=c.getContext('2d');p.drawImage(im,0,0);mark=core.detectTrace(p.getImageData(0,0,c.width,c.height));}finally{c.width=c.height=1;releaseImage(im);}}
   const purpose=metadata?.processingMode==='flatten'?`处理方式：仅合成发送版，未提取原有水印文字。\n补充用途说明：${metadata.purposeNote||'无'}`:`用途水印：${metadata?.watermark||'无'}`;

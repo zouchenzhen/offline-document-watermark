@@ -1,4 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import * as c from '../src/core.mjs';
+import fs from 'node:fs';import {largePdfFixture} from './large-pdf-fixture.mjs';
 const trace='12AB34CD56EF7890',meta={tool:'Offline Document Watermark',traceId:trace,watermark:'仅供示例审核\n其他用途无效'};
 function pixels(w=512,h=512){const data=new Uint8ClampedArray(w*h*4);for(let i=0;i<data.length;i+=4){data[i]=210;data[i+1]=195;data[i+2]=180;data[i+3]=255;}return {width:w,height:h,data};}
 test('page ranges are validated, deduplicated and sorted',()=>{assert.deepEqual(c.parsePages('1-3,5,2',5),[1,2,3,5]);assert.deepEqual(c.parsePages('',2),[1,2]);for(const s of ['0','3-1','6','abc','1,'])assert.throws(()=>c.parsePages(s,5));});
@@ -14,3 +15,15 @@ test('PNG and JPEG metadata round-trip Unicode without source metadata copying',
 test('CRC has standard known vector',()=>assert.equal(c.crc32(c.utf8('123456789')),0xcbf43926));
 test('multi-page PDF carries only flattened JPEG pages and optional Unicode info',()=>{const jpeg=new Uint8Array([255,216,255,217]),pages=[{width:300,height:400,jpeg},{width:600,height:300,jpeg}],pdf=c.buildPdf(pages,meta),str=new TextDecoder('latin1').decode(pdf);assert(str.includes('/Count 2'));assert(!str.includes('/Font'));assert(!str.includes('/Annots'));assert.deepEqual(c.inspectOwnPdf(pdf).metadata,meta);assert.deepEqual(c.inspectOwnPdf(pdf).jpeg,jpeg);assert.equal(c.inspectOwnPdf(c.buildPdf(pages)).metadata,null);const xref=Number(str.match(/startxref\n(\d+)/)[1]);assert.equal(str.slice(xref,xref+4),'xref');const lines=str.slice(xref).split('\n');for(let i=1;i<10;i++){const off=Number(lines[2+i].slice(0,10));assert(str.slice(off).startsWith(i+' 0 obj'));}});
 test('watermark density increases drawn repetitions and scope is clipped',()=>{function count(density){let calls=0,clipped=false;const ctx={save(){},restore(){},beginPath(){},rect(){},clip(){clipped=true;},translate(){},rotate(){},measureText(t){return {width:t.length*20};},fillText(){calls++;}};c.paintWatermark(ctx,1100,1000,{...meta,text:'仅供示例审核',size:23,angle:-24,opacity:.42,color:'#34475d',density,region:{x:10,y:10,w:80,h:80}});assert(clipped);return calls;}assert(count(7)>count(2));});
+test('large own PDFs inspect bounded headers and return the first JPEG as a shared view',()=>{
+ const fixture=largePdfFixture(meta);assert(fixture.bytes.length>80*1024*1024&&fixture.bytes.length<160*1024*1024);
+ const NativeDecoder=globalThis.TextDecoder,decoded=[];
+ globalThis.TextDecoder=class extends NativeDecoder{decode(input,...args){assert(input.byteLength<=65536);decoded.push(input.byteLength);return super.decode(input,...args);}};
+ let own;try{own=c.inspectOwnPdf(fixture.bytes);}finally{globalThis.TextDecoder=NativeDecoder;}
+ assert.deepEqual(own.metadata,meta);assert.deepEqual(own.jpeg,fixture.jpeg);assert.equal(own.jpeg.buffer,fixture.bytes.buffer);assert(own.jpeg.byteOffset>fixture.bytes.byteOffset);assert(Math.max(...decoded)<=65536);
+});
+test('PDF inspection keeps old release compatibility and rejects damaged xref tails',()=>{
+ const old=new Uint8Array(fs.readFileSync(new URL('../docs/examples/two-page-watermarked.pdf',import.meta.url))),own=c.inspectOwnPdf(old);assert.equal(own.metadata.traceId,trace);assert.equal(own.jpeg[0],255);assert.equal(own.jpeg[1],216);
+ assert.deepEqual(c.inspectOwnPdf(old.subarray(0,old.length-20)),{metadata:null,jpeg:null});
+ assert.deepEqual(c.inspectOwnPdf(c.utf8('%PDF-1.4\nxref\n0 999999\nstartxref\n9\n%%EOF\n')),{metadata:null,jpeg:null});
+});

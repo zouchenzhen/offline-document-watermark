@@ -84,10 +84,24 @@ export function readMetadata(bytes){
 export function pdfString(s){let result='FEFF';for(let i=0;i<s.length;i++)result+=s.charCodeAt(i).toString(16).padStart(4,'0');return '<'+result.toUpperCase()+'>';}
 export function inspectOwnPdf(bytes){
  // Only our documented image-only layout; not a general-purpose PDF parser.
- const str=new TextDecoder('latin1').decode(bytes),m=str.match(/\/Subject <FEFF([0-9A-F]+)>/);let metadata=null;
- if(m){let s='';for(let i=0;i<m[1].length;i+=4)s+=String.fromCharCode(parseInt(m[1].slice(i,i+4),16));try{const value=JSON.parse(s);if(value.tool==='Offline Document Watermark')metadata=value;}catch{}}
- const image=str.match(/\/Subtype \/Image \/Width \d+ \/Height \d+ \/ColorSpace \/DeviceRGB \/BitsPerComponent 8 \/Filter \/DCTDecode \/Length (\d+) >>\nstream\n/);
- let jpeg=null;if(image){const start=image.index+image[0].length,len=Number(image[1]);if(len>0&&start+len<=bytes.length)jpeg=bytes.slice(start,start+len);}
+ // Read the small xref/tail and object headers, never turn a large binary PDF
+ // into one string. The first image remains a view into the supplied bytes.
+ const decoder=new TextDecoder('latin1'),head=(at,max)=>decoder.decode(bytes.subarray(at,Math.min(at+max,bytes.length))),empty={metadata:null,jpeg:null};
+ if(bytes.length<20)return empty;
+ const tail=head(Math.max(0,bytes.length-2048),2048),end=tail.match(/startxref\s+(\d+)\s+%%EOF\s*$/);
+ if(!end)return empty;const xref=Number(end[1]);if(!Number.isSafeInteger(xref)||xref<0||xref>=bytes.length)return empty;
+ const table=head(xref,65536),section=table.match(/^xref\s+0\s+(\d+)\s*\n/);if(!section)return empty;
+ const count=Number(section[1]);if(!Number.isSafeInteger(count)||count<2||count>512)return empty;
+ const lines=table.slice(section[0].length).split('\n'),offsets=[];
+ for(let n=0;n<count;n++){const entry=lines[n]?.match(/^(\d{10}) (\d{5}) ([nf])\s*$/);if(!entry)return empty;if(n>0){const at=Number(entry[1]);if(entry[3]!=='n'||entry[2]!=='00000'||at<0||at>=xref)return empty;offsets[n]=at;}}
+ const trailer=lines.slice(count).join('\n'),info=trailer.match(/\/Info (\d+) 0 R/);let metadata=null,jpeg=null;
+ if(info){const n=Number(info[1]),at=offsets[n];if(at!==undefined){const text=head(at,65536),object=text.match(new RegExp('^'+n+' 0 obj\\s+([\\s\\S]*?)\\nendobj')),m=object?.[1].match(/\/Subject <FEFF([0-9A-F]+)>/);
+   if(m&&m[1].length%4===0){let s='';for(let i=0;i<m[1].length;i+=4)s+=String.fromCharCode(parseInt(m[1].slice(i,i+4),16));try{const value=JSON.parse(s);if(value?.tool==='Offline Document Watermark')metadata=value;}catch{}}
+  }}
+ for(let n=1;n<count;n++){const at=offsets[n],text=head(at,1024);if(!text.startsWith(n+' 0 obj\n'))continue;
+  const image=text.match(/\/Subtype \/Image \/Width \d+ \/Height \d+ \/ColorSpace \/DeviceRGB \/BitsPerComponent 8 \/Filter \/DCTDecode \/Length (\d+) >>\nstream\n/);
+  if(image){const start=at+image.index+image[0].length,len=Number(image[1]);if(Number.isSafeInteger(len)&&len>0&&start+len<=xref){jpeg=bytes.subarray(start,start+len);}break;}
+ }
  return {metadata,jpeg};
 }
 export function buildPdf(pages,meta=null){
