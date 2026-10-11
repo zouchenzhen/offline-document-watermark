@@ -4,6 +4,7 @@ function decode64(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.
 function moduleUrl(s){return URL.createObjectURL(new Blob([decode64(s)],{type:'text/javascript'}));}
 const coreUrl=moduleUrl(bundle.core),core=await import(coreUrl);URL.revokeObjectURL(coreUrl);
 $('licenses').textContent=Object.entries(bundle.licenses).map(([name,text])=>name+'\n'+text).join('\n\n');
+if(location.protocol==='file:'){$('offlineDownload').removeAttribute('href');$('offlineDownload').removeAttribute('download');$('offlineDownload').textContent='当前为离线文件';}
 if(!URL.parse)URL.parse=(url,base)=>{try{return new URL(url,base);}catch{return null;}};
 const canvas=$('canvas'),ctx=canvas.getContext('2d');
 let sources=[],pdfDoc=null,pdfTask=null,current=0,generation=0,previewGeneration=0,pdfPromise=null,previewTimer=null,busy=false,lastRecords=[],loadedDemo=true;
@@ -21,6 +22,7 @@ function updateControls(){
  const locked=busy||!total()||!$('text').value.trim();['png','jpg','pdf'].forEach(id=>$(id).disabled=locked);
  $('prev').disabled=busy||current===0;$('next').disabled=busy||current>=total()-1;$('manifest').disabled=!lastRecords.length||busy;
  $('file').disabled=$('demo').disabled=$('clear').disabled=$('sampleImages').disabled=$('samplePdf').disabled=busy;
+ ['text','density','opacity','size','angle','color','scope','rx','ry','rw','rh','dpi','longSide','quality','hiddenMark','metadata','trace','newTrace','pages','verifyFile'].forEach(id=>$(id).disabled=busy);
 }
 async function pdfLibrary(){
  if(!pdfPromise)pdfPromise=(async()=>{const url=moduleUrl(bundle.pdf),lib=await import(url);URL.revokeObjectURL(url);const workerUrl=moduleUrl(bundle.worker);lib.GlobalWorkerOptions.workerPort=new Worker(workerUrl,{type:'module'});
@@ -28,7 +30,7 @@ async function pdfLibrary(){
   return {lib,EmbeddedDataFactory};})();return pdfPromise;
 }
 async function decodeImage(blob){const url=URL.createObjectURL(blob),im=new Image();try{im.src=url;await im.decode();return im;}finally{URL.revokeObjectURL(url);}}
-async function openPdf(data){const {lib,EmbeddedDataFactory}=await pdfLibrary();pdfTask=lib.getDocument({data,BinaryDataFactory:EmbeddedDataFactory,useWorkerFetch:false,cMapUrl:'embedded/cmaps/',standardFontDataUrl:'embedded/standard_fonts/',wasmUrl:'embedded/wasm/',isEvalSupported:false,enableXfa:false,disableAutoFetch:true,maxImageSize:40000000,canvasMaxAreaInBytes:96000000,verbosity:0});pdfDoc=await pdfTask.promise;if(pdfDoc.numPages>100)throw Error('暂时只支持最多 100 页的 PDF。');}
+async function openPdf(data){const {lib,EmbeddedDataFactory}=await pdfLibrary();pdfTask=lib.getDocument({data,BinaryDataFactory:EmbeddedDataFactory,useWorkerFetch:false,useSystemFonts:false,cMapUrl:'embedded/cmaps/',standardFontDataUrl:'embedded/standard_fonts/',wasmUrl:'embedded/wasm/',isEvalSupported:false,enableXfa:false,disableAutoFetch:true,maxImageSize:40000000,canvasMaxAreaInBytes:96000000,verbosity:0});pdfDoc=await pdfTask.promise;if(pdfDoc.numPages>100)throw Error('暂时只支持最多 100 页的 PDF。');}
 async function cleanup(){generation++;previewGeneration++;sources=[];current=0;lastRecords=[];if(pdfTask){const t=pdfTask;pdfTask=null;pdfDoc=null;await t.destroy().catch(()=>{});}pdfDoc=null;$('pages').value='';}
 function makeDemo(){const c=document.createElement('canvas');c.width=1100;c.height=1000;const p=c.getContext('2d');p.fillStyle='#fff';p.fillRect(0,0,1100,1000);for(const y of [65,535]){p.fillStyle='#dce9ee';p.beginPath();p.roundRect(110,y,880,350,22);p.fill();}p.fillStyle='#365267';p.font='25px "Microsoft YaHei",sans-serif';['虚构证件 · 仅用于水印效果演示','姓名    示例用户','出生    2000 年 1 月 1 日','住址    示例省示例市示例路','号码    XXXX XXXX XXXX XXXX'].forEach((s,i)=>p.fillText(s,150,125+i*55));p.fillText('示例证件 · 背面',375,620);p.fillText('签发机关    示例机构',180,780);p.fillText('有效期限    示例日期 — 示例日期',180,840);p.fillStyle='#91adbc';p.beginPath();p.arc(840,200,45,0,Math.PI*2);p.fill();p.fillRect(790,250,100,100);return c;}
 async function showDemo(){await cleanup();sources=[makeDemo()];loadedDemo=true;freshTrace();await preview();status('当前是虚构示例，不含真实身份证资料。');}
