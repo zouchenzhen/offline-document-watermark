@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import * as realCore from '../src/core.mjs';
 import * as workerAssets from '../src/worker-assets.mjs';
 import {largePdfFixture} from './large-pdf-fixture.mjs';
+import {assembleHtml} from '../scripts/build.mjs';
 
 // Exercise the actual app event handlers with a deterministic DOM/PDF adapter.
 // This covers state transitions, not real-browser codec or layout compatibility.
@@ -19,20 +20,36 @@ async function app(overrides={}){
  const values={mode:'add',scope:'all',text:'Only for demonstration',opacity:'42',size:'23',angle:'-24',density:'3',color:'#34475d',dpi:'300',longSide:'0',quality:'92',rx:'10',ry:'10',rw:'80',rh:'80'};
  for(const [k,v]of Object.entries(values))get(k).value=v;
  const resources={'iccs/fixture.icc':'AA==','wasm/fixture.wasm':'AA=='};
- get('bundle').textContent=JSON.stringify({licenses:{},samples:[],pdf:'',worker:Buffer.from('// fixture PDF worker').toString('base64'),workerAssets:'',assets:resources});
+ const canonicalHtml=assembleHtml({template:fs.readFileSync(new URL('../src/index.template.html',import.meta.url),'utf8'),css:'/* synthetic style */',bundle:{licenses:{},samples:[],pdf:'',worker:Buffer.from('// fixture PDF worker').toString('base64'),workerAssets:'',assets:resources},app:source,version:realCore.VERSION});
+ get('bundle').textContent=canonicalHtml.match(/<script id="bundle" type="application\/json">([\s\S]*?)<\/script>/)[1];
  const document={getElementById:get,createElement(tag){return tag==='canvas'?{width:0,height:0,getContext(){return context2d;},toBlob(callback,type){callback(new Blob([type==='image/png'?png:jpeg],{type}));}}:{click(){saved.push({name:this.download,blob:blobs.get(this.href)});},remove(){}};},body:{append(){}}};
  class ReviewURL extends URL{static createObjectURL(blob){const key='blob:review-'+(++blobId);blobs.set(key,blob);return key;}static revokeObjectURL(key){blobs.delete(key);}}
  const core={...realCore,paintWatermark(...args){counts.paint++;return realCore.paintWatermark(...args);},embedTrace(...args){counts.embed++;return overrides.embedTrace?overrides.embedTrace(...args):args[0];},detectTrace(...args){counts.detect++;return overrides.detectTrace?overrides.detectTrace(...args):null;}};
  const transformed=source.replace("const coreUrl=moduleUrl(bundle.core),core=await import(coreUrl);URL.revokeObjectURL(coreUrl);",'const core=__core;')
   .replace('lib=await import(url)','lib=__pdfLibrary').replace('{workerPrelude}=await import(bridgeUrl)','{workerPrelude}=__workerAssets').replace('const MAX_OUTPUT_BYTES=MAX_FILE_BYTES;','const MAX_OUTPUT_BYTES=__outputLimit;');
- const sandbox={document,location:{protocol:'https:'},crypto:globalThis.crypto,URL:ReviewURL,Blob,atob,Uint8Array,Uint8ClampedArray,TextDecoder,console,Image:class {constructor(){this.naturalWidth=overrides.imageWidth||512;this.naturalHeight=overrides.imageHeight||512;}async decode(){counts.decoded++;counts.liveImages++;counts.maxLiveImages=Math.max(counts.maxLiveImages,counts.liveImages);this.loaded=true;}removeAttribute(name){if(name==='src'&&this.loaded){counts.released++;counts.liveImages--;this.loaded=false;}}},Worker:class {constructor(url,options){this.options=options;workerScripts.push(blobs.get(url));}},__core:core,__workerAssets:workerAssets,__pdfLibrary:overrides.pdfLibrary,__outputLimit:overrides.outputLimit??160*1024*1024,
+ const sandbox={document,location:{protocol:overrides.protocol||'https:'},crypto:globalThis.crypto,URL:ReviewURL,Blob,atob,Uint8Array,Uint8ClampedArray,TextDecoder,console,Image:class {constructor(){this.naturalWidth=overrides.imageWidth||512;this.naturalHeight=overrides.imageHeight||512;}async decode(){counts.decoded++;counts.liveImages++;counts.maxLiveImages=Math.max(counts.maxLiveImages,counts.liveImages);this.loaded=true;}removeAttribute(name){if(name==='src'&&this.loaded){counts.released++;counts.liveImages--;this.loaded=false;}}},Worker:class {constructor(url,options){this.options=options;workerScripts.push(blobs.get(url));}},__core:core,__workerAssets:workerAssets,__pdfLibrary:overrides.pdfLibrary,__outputLimit:overrides.outputLimit??160*1024*1024,
   setTimeout(fn,delay){const timer=setTimeout(fn,delay);if(delay===30000)timer.unref();return timer;},clearTimeout};
  await vm.runInContext('(async()=>{'+transformed+';globalThis.review={getState:()=>({total:total(),current,pdfDoc,pdfTask,sources,generation,busy,previewValid,lastRecords}),setPdf:(doc,task)=>{pdfDoc=doc;pdfTask=task;},setLibrary:p=>{pdfPromise=p;},cleanup,preview,showDemo,exportFiles,updateControls};})()',vm.createContext(sandbox));
- return {get,review:sandbox.review,counts,saved,workerScripts,resources};
+ return {get,review:sandbox.review,counts,saved,workerScripts,resources,canonicalHtml,document};
 }
 function pdfDoc({failPage=0,renderWait=null,numPages=1}={}){return {numPages,async getPage(pageNumber){return {getViewport({scale}){return {width:600*scale,height:800*scale};},render(){return {promise:pageNumber===failPage?Promise.reject(Error('fixture render failed')):renderWait||Promise.resolve()};},cleanup(){}};}};}
 function library(document){return Promise.resolve({lib:{getDocument(){return {promise:Promise.resolve(document),destroy:async()=>{}};}},EmbeddedDataFactory:class {}});}
 async function importPdf(a,doc){a.review.setLibrary(library(doc));const input=a.get('file');input.files=[{name:'fixture.pdf',type:'application/pdf',size:10,arrayBuffer:async()=>new ArrayBuffer(10)}];return input.listeners.change({target:input});}
+
+test('offline tool Blob matches canonical bytes and excludes current materials, notes and preview DOM',async()=>{
+ const a=await app(),privateMarker='PRIVATE_RUNTIME_EXAMPLE_NOT_FOR_DOWNLOAD';
+ a.get('text').value=privateMarker;a.get('verification').textContent=privateMarker;a.get('status').textContent=privateMarker;a.get('file').files=[{name:privateMarker+'.png'}];
+ a.document.body.innerHTML='<aside>candidate preview '+privateMarker+'</aside>';
+ let prevented=false;a.get('offlineDownload').onclick({preventDefault(){prevented=true;}});
+ assert(prevented);assert.equal(a.saved.length,1);assert.equal(a.saved[0].name,'offline-watermark-v'+realCore.VERSION+'.html');
+ assert.equal(a.saved[0].blob.type,'text/html;charset=utf-8');
+ const output=await a.saved[0].blob.text();assert.equal(output,a.canonicalHtml);assert(!output.includes(privateMarker));
+ assert.match(a.get('status').textContent,/只包含工具和公开示例/);assert.match(a.get('status').textContent,/不含你导入的材料/);
+});
+
+test('file mode keeps the current-offline hint without a redundant save handler',async()=>{
+ const a=await app({protocol:'file:'});assert.equal(a.get('offlineDownload').textContent,'当前为离线文件');assert.equal(a.get('offlineDownload').onclick,undefined);assert.equal(a.saved.length,0);
+});
 
 test('clear locks imports until old PDF teardown finishes',async()=>{
  const a=await app(),destroy=deferred();a.review.setPdf(pdfDoc(),{destroy:()=>destroy.promise});

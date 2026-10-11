@@ -38,6 +38,19 @@ test('template insertion preserves dollars and inserted template-looking fragmen
   assert.equal(decoded.licenses.Synthetic, '$& $` $\' $$ /*__APP__*/');
 });
 
+test('static document halves reconstruct canonical HTML exactly without recursive JSON', () => {
+  const payload = '</script><script><!-- $& $` $\' $$ \u2028\u2029 简体中文';
+  const html = assembleHtml({ template, css: 'body::before { content: "/*__BUNDLE__*/ $&"; }', bundle: { licenses: { Synthetic: payload } }, app: `globalThis.publicValue=${JSON.stringify(payload)};`, version: '0.3.0' });
+  const { json } = extract(html), bundle = JSON.parse(json), prefix = Buffer.from(bundle.documentPrefix, 'base64'), suffix = Buffer.from(bundle.documentSuffix, 'base64');
+  assert.equal(Buffer.concat([prefix, Buffer.from(json), suffix]).toString('utf8'), html);
+  assert(prefix.toString().endsWith('<script id="bundle" type="application/json">'));
+  assert(suffix.toString().startsWith('</script><script type="module">'));
+  assert(!prefix.includes(Buffer.from('"documentPrefix":')));
+  assert(!suffix.includes(Buffer.from('"documentPrefix":')));
+  assert.equal(bundle.licenses.Synthetic, payload);
+  assert.throws(() => assembleHtml({ template: 'no marker', css: '', bundle: {}, app: '', version: '0.3.0' }));
+});
+
 test('closing style tags in CSS source cannot create an extra script element', () => {
   const html = assembleHtml({ template, css: 'body::before { content: "</StYlE><script>demo</script>"; }', bundle: {}, app: '', version: '0.3.0' });
   assert(html.includes('<style>body::before { content: "<\\/StYlE><script>demo</script>"; }</style>'));

@@ -40,16 +40,21 @@ try {
 /** Assemble the document once; inserted payloads cannot become template tokens. */
 export function assembleHtml({ template, css, bundle, app, version }) {
   if ([template, css, app, version].some(value => typeof value !== 'string')) throw Error('Build inputs must be text.');
-  const serialized = JSON.stringify({ ...bundle, app: textBase64(app) })
-    .replace(/[<\u2028\u2029]/g, char => char === '<' ? '\\u003c' : char === '\u2028' ? '\\u2028' : '\\u2029');
   const insertions = {
     '__VERSION__': version,
     '/*__CSS__*/': css.replace(/<\/style/gi, text => '<\\/' + text.slice(2)),
-    '/*__BUNDLE__*/': serialized,
     '/*__APP__*/': APP_BOOTSTRAP,
   };
   // A callback preserves $&, $`, $', and $$ in all payloads literally.
-  return template.replace(/__VERSION__|\/\*__(?:CSS|BUNDLE|APP)__\*\//g, token => insertions[token]);
+  const insert = part => part.replace(/__VERSION__|\/\*__(?:CSS|APP)__\*\//g, token => insertions[token]);
+  const marker = '/*__BUNDLE__*/', position = template.indexOf(marker);
+  if (position < 0 || template.indexOf(marker, position + marker.length) >= 0) throw Error('Template must contain exactly one bundle insertion.');
+  // These static halves never include bundle JSON, so there is no recursive copy.
+  // The download reconstructs these bytes rather than serializing runtime DOM.
+  const prefix = insert(template.slice(0, position)), suffix = insert(template.slice(position + marker.length));
+  const serialized = JSON.stringify({ ...bundle, app: textBase64(app), documentPrefix: textBase64(prefix), documentSuffix: textBase64(suffix) })
+    .replace(/[<\u2028\u2029]/g, char => char === '<' ? '\\u003c' : char === '\u2028' ? '\\u2028' : '\\u2029');
+  return prefix + serialized + suffix;
 }
 
 export function buildProject() {

@@ -1,6 +1,6 @@
 # Third-party notices
 
-Original v0.2 application code: Copyright 2026 zouchenzhen, MIT.
+Original application code: Copyright 2026 zouchenzhen, MIT.
 
 Bundled PDF.js 5.6.205 is distributed under Apache-2.0. The vendored LICENSE and the resource-specific font/decoder notices are preserved under `vendor/pdfjs/`. The production application has no remote runtime dependencies. PDF.js resource permissions remain unchanged by the application license.
 

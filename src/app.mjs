@@ -5,6 +5,7 @@ function moduleUrl(s){return URL.createObjectURL(new Blob([decode64(s)],{type:'t
 const coreUrl=moduleUrl(bundle.core),core=await import(coreUrl);URL.revokeObjectURL(coreUrl);
 $('licenses').textContent=Object.entries(bundle.licenses).map(([name,text])=>name+'\n'+text).join('\n\n');
 if(location.protocol==='file:'){$('offlineDownload').removeAttribute('href');$('offlineDownload').removeAttribute('download');$('offlineDownload').textContent='当前为离线文件';}
+else $('offlineDownload').onclick=e=>{e.preventDefault();try{const tool=new Blob([decode64(bundle.documentPrefix),$('bundle').textContent,decode64(bundle.documentSuffix)],{type:'text/html;charset=utf-8'});save(tool,'text/html;charset=utf-8','offline-watermark-v'+core.VERSION+'.html');status('已发起保存离线工具文件；它只包含工具和公开示例，不含你导入的材料、填写的文字或验证结果。');}catch(err){status('离线工具保存失败：'+err.message,true);}};
 if(!URL.parse)URL.parse=(url,base)=>{try{return new URL(url,base);}catch{return null;}};
 const canvas=$('canvas'),ctx=canvas.getContext('2d');
 const MAX_FILE_BYTES=160*1024*1024;
