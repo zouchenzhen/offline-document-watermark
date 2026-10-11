@@ -1,0 +1,8 @@
+Offline Document Watermark
+Copyright 2026 zouchenzhen
+
+Original application code is licensed under the MIT License.
+Third-party code and example materials retain their own terms.
+
+Includes Mozilla PDF.js 5.6.205, licensed under Apache License 2.0.
+See vendor/pdfjs/LICENSE and resource-specific notices.

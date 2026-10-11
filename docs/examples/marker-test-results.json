@@ -1,0 +1,32 @@
+[
+  {
+    "sample": "id-card",
+    "jpegQuality": 92,
+    "detected": "12AB34CD56EF7890"
+  },
+  {
+    "sample": "id-card",
+    "jpegQuality": 80,
+    "detected": "12AB34CD56EF7890"
+  },
+  {
+    "sample": "id-card",
+    "jpegQuality": 60,
+    "detected": "12AB34CD56EF7890"
+  },
+  {
+    "sample": "screenshot",
+    "jpegQuality": 92,
+    "detected": "12AB34CD56EF7890"
+  },
+  {
+    "sample": "screenshot",
+    "jpegQuality": 80,
+    "detected": "12AB34CD56EF7890"
+  },
+  {
+    "sample": "screenshot",
+    "jpegQuality": 60,
+    "detected": "12AB34CD56EF7890"
+  }
+]
