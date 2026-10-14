@@ -1,6 +1,6 @@
 // Copyright 2026 zouchenzhen. SPDX-License-Identifier: MIT
 // Platform-neutral pixel, metadata, and image-only PDF helpers.
-export const VERSION='0.4.1';
+export const VERSION='0.4.2';
 const te=new TextEncoder(),td=new TextDecoder();
 export function concat(parts){const size=parts.reduce((n,p)=>n+p.length,0),out=new Uint8Array(size);let o=0;for(const p of parts){out.set(p,o);o+=p.length;}return out;}
 export const utf8=s=>te.encode(s);

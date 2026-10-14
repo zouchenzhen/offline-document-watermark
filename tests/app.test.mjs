@@ -21,9 +21,9 @@ async function app(overrides={}){
  const counts={paint:0,embed:0,detect:0,decoded:0,released:0,liveImages:0,maxLiveImages:0},saved=[],workerScripts=[],blobs=new Map(),elements=new Map(),windowListeners=new Map(),storage=overrides.storage||memoryStorage();let blobId=0;
  const context2d={save(){},restore(){},beginPath(){},roundRect(){},fill(){},fillRect(){},clearRect(){},rect(){},clip(){},translate(){},rotate(){},measureText(s){return {width:s.length*10};},fillText(){},arc(){},drawImage(){},getImageData(){return {width:512,height:512,data:new Uint8ClampedArray(512*512*4)};},putImageData(){}};
  const get=id=>{if(!elements.has(id))elements.set(id,{id,value:'',textContent:'',checked:false,disabled:false,hidden:false,files:[],children:[],classList:{toggle(){}},listeners:{},addEventListener(name,fn){const previous=this.listeners[name];this.listeners[name]=previous?(...args)=>{previous(...args);return fn(...args);}:fn;},append(child){this.children.push(child);},removeAttribute(){},getContext(){return context2d;}});return elements.get(id);};
- const values={mode:'add',scope:'all',text:'Only for demonstration',opacity:'42',size:'23',angle:'-24',density:'3',color:'#34475d',dpi:'300',longSide:'0',quality:'92',rx:'10',ry:'10',rw:'80',rh:'80'};
+ const values={scope:'all',text:'Only for demonstration',opacity:'42',size:'23',angle:'-24',density:'3',color:'#34475d',dpi:'300',longSide:'0',quality:'92',rx:'10',ry:'10',rw:'80',rh:'80'};
  for(const [k,v]of Object.entries(values))get(k).value=v;
- get('timePrefix').checked=get('rememberConfig').checked=true;
+ get('addVisibleWatermark').checked=get('timePrefix').checked=get('rememberConfig').checked=true;
  const resources={'iccs/fixture.icc':'AA==','wasm/fixture.wasm':'AA=='};
  const canonicalHtml=assembleHtml({template:fs.readFileSync(new URL('../src/index.template.html',import.meta.url),'utf8'),css:'/* synthetic style */',bundle:{licenses:{},samples:[],pdf:'',worker:Buffer.from('// fixture PDF worker').toString('base64'),workerAssets:'',assets:resources},app:source,version:realCore.VERSION});
  get('bundle').textContent=canonicalHtml.match(/<script id="bundle" type="application\/json">([\s\S]*?)<\/script>/)[1];
@@ -41,6 +41,8 @@ async function app(overrides={}){
 function pdfDoc({failPage=0,renderWait=null,numPages=1}={}){return {numPages,async getPage(pageNumber){return {getViewport({scale}){return {width:600*scale,height:800*scale};},render(){return {promise:pageNumber===failPage?Promise.reject(Error('fixture render failed')):renderWait||Promise.resolve()};},cleanup(){}};}};}
 function library(document){return Promise.resolve({lib:{getDocument(){return {promise:Promise.resolve(document),destroy:async()=>{}};}},EmbeddedDataFactory:class {}});}
 async function importPdf(a,doc){a.review.setLibrary(library(doc));const input=a.get('file');input.files=[{name:'fixture.pdf',type:'application/pdf',size:10,arrayBuffer:async()=>new ArrayBuffer(10)}];return input.listeners.change({target:input});}
+function requestUnload(a){const event={prevented:false,preventDefault(){this.prevented=true;}};a.windowListeners.get('beforeunload')(event);return event;}
+function editControl(a,id,event,value){const control=a.get(id);if(typeof value==='boolean')control.checked=value;else control.value=value;assert.equal(typeof control.listeners[event],'function',id+' must handle '+event);return control.listeners[event]({type:event,target:control});}
 
 test('offline tool Blob matches canonical bytes and excludes current materials, notes and preview DOM',async()=>{
  const a=await app(),privateMarker='PRIVATE_RUNTIME_EXAMPLE_NOT_FOR_DOWNLOAD';
@@ -67,7 +69,7 @@ test('clear locks imports until old PDF teardown finishes',async()=>{
 test('demo also locks imports during PDF teardown',async()=>{
  const a=await app(),destroy=deferred();a.review.setPdf(pdfDoc(),{destroy:()=>destroy.promise});
  const showing=a.get('demo').onclick();assert.equal(a.get('file').disabled,true);await importPdf(a,pdfDoc());assert.equal(a.review.getState().pdfDoc,null);
- destroy.resolve();await showing;assert.equal(a.review.getState().total,1);assert.equal(a.review.getState().busy,false);
+ destroy.resolve();await showing;assert.equal(a.review.getState().total,1);assert.equal(a.review.getState().busy,false);assert.equal(requestUnload(a).prevented,true,'explicitly choosing the demo creates session work');
 });
 test('render failure survives import and disables export',async()=>{
  const a=await app();await importPdf(a,pdfDoc({failPage:1}));assert.match(a.get('status').textContent,/预览失败：fixture render failed/);
@@ -85,20 +87,20 @@ test('in-progress preview disables export until actual render completion',async(
  render.resolve();assert.equal(await previewing,true);assert.equal(a.get('pdf').disabled,false);
 });
 test('flatten mode permits empty purpose and neither preview nor export paints a watermark',async()=>{
- const a=await app();a.get('mode').value='flatten';a.get('text').value='';const before=a.counts.paint;assert.equal(await a.review.preview(),true);
+ const a=await app();a.get('addVisibleWatermark').checked=false;a.get('text').value='';const before=a.counts.paint;assert.equal(await a.review.preview(),true);
  assert.equal(a.get('png').disabled,false);assert.equal(a.get('density').disabled,true);assert.equal(a.get('text').disabled,false);
  a.get('metadata').checked=true;await a.review.exportFiles('png');assert.equal(a.saved.length,1);assert.equal(a.counts.paint,before);
  const meta=realCore.readMetadata(new Uint8Array(await a.saved[0].blob.arrayBuffer()));assert.equal(meta.processingMode,'flatten');assert.equal(meta.watermark,'');assert.equal(meta.purposeNote,'');
 });
 test('flatten optional note is separate from a newly drawn watermark',async()=>{
- const a=await app();a.get('mode').value='flatten';a.get('text').value='Example purpose';a.get('metadata').checked=true;
+ const a=await app();a.get('addVisibleWatermark').checked=false;a.get('text').value='Example purpose';a.get('metadata').checked=true;
  await a.review.preview();await a.review.exportFiles('pdf');const meta=realCore.inspectOwnPdf(new Uint8Array(await a.saved[0].blob.arrayBuffer())).metadata;
  assert.equal(meta.watermark,'');assert.equal(meta.purposeNote,'Example purpose');assert.equal(meta.processingMode,'flatten');
 });
 test('add mode refuses empty text and invalid coverage; flatten ignores unused coverage',async()=>{
  const a=await app();a.get('text').value='';assert.equal(await a.review.preview(),false);assert.equal(a.get('png').disabled,true);
  a.get('text').value='Example';a.get('scope').value='custom';a.get('rw').value='100';assert.equal(await a.review.preview(),false);assert.match(a.get('status').textContent,/覆盖矩形/);
- a.get('mode').value='flatten';a.get('text').value='';assert.equal(await a.review.preview(),true);assert.equal(a.get('png').disabled,false);
+ a.get('addVisibleWatermark').checked=false;a.get('text').value='';assert.equal(await a.review.preview(),true);assert.equal(a.get('png').disabled,false);
 });
 test('a password-protected PDF gets a local actionable error and releases controls',async()=>{
  const a=await app();a.review.setLibrary(Promise.resolve({lib:{getDocument(){return {promise:Promise.reject(Object.assign(Error('Password needed'),{name:'PasswordException'})),destroy:async()=>{}};}},EmbeddedDataFactory:class {}}));
@@ -143,7 +145,7 @@ test('all PDF pages must pass compressed marker checking before any PDF is downl
  await a.review.exportFiles('pdf');assert.equal(checks,2);assert.equal(a.saved.length,0);assert.equal(a.review.getState().lastRecords.length,0);assert.match(a.get('status').textContent,/已停止保存/);
 });
 test('local verification explains flatten metadata and serializes file operations',async()=>{
- const a=await app();a.get('mode').value='flatten';a.get('text').value='Example note';a.get('metadata').checked=true;await a.review.preview();await a.review.exportFiles('png');
+ const a=await app();a.get('addVisibleWatermark').checked=false;a.get('text').value='Example note';a.get('metadata').checked=true;await a.review.preview();await a.review.exportFiles('png');
  const bytes=await a.saved[0].blob.arrayBuffer(),reading=deferred(),input=a.get('verifyFile');input.files=[{name:'fixture.png',type:'image/png',size:bytes.byteLength,arrayBuffer:()=>reading.promise}];
  const verifying=input.listeners.change({target:input});assert.equal(a.get('file').disabled,true);assert.equal(a.get('clear').disabled,true);assert.equal(a.get('pdf').disabled,true);
  reading.resolve(bytes);await verifying;assert.match(a.get('verification').textContent,/未提取原有水印文字/);assert.match(a.get('verification').textContent,/补充用途说明：Example note/);assert.equal(a.get('file').disabled,false);assert.equal(a.counts.liveImages,0);
@@ -199,7 +201,7 @@ test('saved settings and selected historical configuration restore while session
 
 test('refresh guard flushes pending preferences and prompts only after session interaction',async()=>{
  const a=await app();let prevented=0;const event=()=>({preventDefault(){prevented++;}});a.windowListeners.get('beforeunload')(event());assert.equal(prevented,0);
- a.get('text').value='Synthetic pending purpose';a.get('text').listeners.input();const active=event();a.windowListeners.get('beforeunload')(active);assert.equal(prevented,1);assert.equal(active.returnValue,'');assert.equal(preferences.readPreferences(a.storage).latest.text,'Synthetic pending purpose');await a.get('clear').onclick();a.windowListeners.get('beforeunload')(event());assert.equal(prevented,1);
+ a.get('text').value='Synthetic pending purpose';a.get('text').listeners.input();const active=event();a.windowListeners.get('beforeunload')(active);assert.equal(prevented,1);assert.equal(active.returnValue,true);assert.equal(preferences.readPreferences(a.storage).latest.text,'Synthetic pending purpose');await a.get('clear').onclick();a.windowListeners.get('beforeunload')(event());assert.equal(prevented,1);
 });
 
 test('clearing remembered settings remains disabled after a new page session',async()=>{
@@ -216,4 +218,59 @@ test('denied browser preference storage leaves import, export and refresh guard 
 
 test('metadata-only verification explicitly differs from a surviving pixel marker',async()=>{
  const a=await app();a.get('metadata').checked=true;await a.review.exportFiles('png');const bytes=await a.saved[0].blob.arrayBuffer(),input=a.get('verifyFile');input.files=[{name:'metadata-only.png',type:'image/png',size:bytes.byteLength,arrayBuffer:async()=>bytes}];await input.listeners.change({target:input});assert.match(a.get('verification').textContent,/元信息编号：20261014T010203Z-/);assert.match(a.get('verification').textContent,/目前只读到元信息/);assert.match(a.get('verification').textContent,/未检出有效隐藏像素标记/);
+});
+
+test('legacy add/flatten preferences map to the visible-watermark checkbox without creating session work',async()=>{
+ for(const mode of ['add','flatten']){
+  const storage=memoryStorage();preferences.writePreferences(storage,{mode,text:'Legacy synthetic purpose',density:5,quality:80},{now:'2026-10-14T01:00:00Z'});
+  const a=await app({storage});assert.equal(a.get('addVisibleWatermark').checked,mode==='add');assert.equal(a.get('text').value,'Legacy synthetic purpose');assert.equal(a.get('density').value,'5');assert.equal(a.get('quality').value,'80');assert.equal(a.get('density').disabled,mode==='flatten');assert.equal(requestUnload(a).prevented,false,'startup restore is not a new user edit');
+  a.review.persistPreferences();assert.equal(preferences.readPreferences(storage).latest.mode,mode);assert(!Object.hasOwn(preferences.readPreferences(storage).latest,'addVisibleWatermark'));
+ }
+});
+
+test('checkbox changes persist mode compatibility and historical restore restores the checkbox',async()=>{
+ const a=await app();editControl(a,'addVisibleWatermark','change',false);a.get('text').value='';await a.review.preview();a.review.persistPreferences();
+ assert.equal(a.get('png').disabled,false);assert.equal(a.get('pdf').disabled,false);assert.equal(preferences.readPreferences(a.storage).latest.mode,'flatten');
+ editControl(a,'addVisibleWatermark','input',true);editControl(a,'text','change','New synthetic purpose');await a.review.preview();a.review.persistPreferences();assert.equal(preferences.readPreferences(a.storage).latest.mode,'add');
+ const old=preferences.readPreferences(a.storage).history.find(entry=>entry.config.mode==='flatten');assert(old);a.get('configHistory').value=old.id;a.get('restoreConfig').onclick();await a.review.preview();assert.equal(a.get('addVisibleWatermark').checked,false);assert.equal(a.get('text').value,'');assert.equal(a.get('density').disabled,true);a.review.persistPreferences();assert.equal(preferences.readPreferences(a.storage).latest.mode,'flatten');
+ await a.review.cleanup();
+});
+
+test('parameter input and change both request leaving confirmation before any user material is imported',async()=>{
+ // This asserts the app's request, not whether a browser will display a dialog.
+ const changes=[['density','4'],['angle','-30'],['quality','80'],['dpi','200'],['longSide','1600'],['scope','custom'],['text','Synthetic changed purpose'],['color','#123456'],['opacity','55'],['size','30'],['rx','15'],['ry','15'],['rw','70'],['rh','70'],['hiddenMark',true],['metadata',true],['timePrefix',false],['addVisibleWatermark',false]];
+ for(const [id,value]of changes)for(const eventName of ['input','change']){
+  const a=await app();assert.equal(requestUnload(a).prevented,false,id+' '+eventName+' starts without a request');assert.match(a.get('fileNames').textContent,/内置虚构示例/);editControl(a,id,eventName,value);
+  const leaving=requestUnload(a);assert.equal(leaving.prevented,true,id+' '+eventName+' must request leaving confirmation');assert.equal(leaving.returnValue,true,id+' '+eventName+' must set the legacy guard value');assert.equal(a.saved.length,0,'settings changes do not save material files');
+  await a.review.cleanup();
+ }
+});
+
+test('manual trace and page-range edits request confirmation but never enter persistent settings',async()=>{
+ for(const [id,value]of [['trace','FEDCBA9876543210'],['pages','1']])for(const eventName of ['input','change']){
+  const a=await app();editControl(a,id,eventName,value);const leaving=requestUnload(a);assert.equal(leaving.prevented,true,id+' '+eventName);assert.equal(leaving.returnValue,true);
+  a.review.persistPreferences();const state=preferences.readPreferences(a.storage),raw=[...a.storage.data.values()].join('');assert(!Object.hasOwn(state.latest,id));assert(!raw.includes('"'+id+'"'));if(id==='trace')assert(!raw.includes(value));assert.equal(a.saved.length,0);
+  await a.review.cleanup();
+ }
+});
+
+test('saving only local settings keeps the session reminder and does not pretend materials were saved',async()=>{
+ const a=await app();editControl(a,'density','change','5');a.review.persistPreferences();assert.equal(preferences.readPreferences(a.storage).latest.density,5);assert.equal(a.saved.length,0);assert.equal(requestUnload(a).prevented,true);assert.match(a.get('fileNames').textContent,/内置虚构示例/);await a.review.cleanup();
+});
+
+test('disabled or broken preference storage cannot remove protection for parameter-only work after clearing materials',async()=>{
+ const broken=memoryStorage();broken.data.set(preferences.PREFERENCES_STORAGE_KEY,'{broken json');
+ const denied={getItem(){throw Error('Denied');},setItem(){throw Error('Denied');}};
+ for(const storage of [memoryStorage(),broken,denied]){
+  const a=await app({storage});if(a.get('rememberConfig').checked)editControl(a,'rememberConfig','change',false);
+  editControl(a,'angle','change','-35');editControl(a,'text','input','Synthetic unsaved settings');assert.equal(a.saved.length,0);assert.equal(requestUnload(a).prevented,true);await a.get('clear').onclick();assert.equal(a.get('text').value,'Synthetic unsaved settings');assert.equal(requestUnload(a).prevented,true,'clearing materials must retain unsaved settings protection');
+  const raw=storage.data?[...storage.data.values()].join(''):'';assert(!raw.includes('Synthetic unsaved settings'));
+ }
+});
+
+test('valid local PDF navigation requests confirmation without importing or saving a user file',async()=>{
+ const a=await app();a.get('prev').onclick();assert.equal(requestUnload(a).prevented,false,'an ineffective previous-page click must not create work');
+ a.review.setPdf(pdfDoc({numPages:2}),{destroy:async()=>{}});await a.review.preview();assert.equal(requestUnload(a).prevented,false,'fixture setup is not a user interaction');
+ a.get('next').onclick();await new Promise(resolve=>setImmediate(resolve));assert.equal(a.review.getState().current,1);assert.equal(requestUnload(a).prevented,true);assert.equal(a.saved.length,0);assert.match(a.get('fileNames').textContent,/内置虚构示例/);
+ await a.get('clear').onclick();assert.equal(requestUnload(a).prevented,false,'explicit clearing ends this navigation-only session');
 });

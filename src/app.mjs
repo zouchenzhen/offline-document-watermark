@@ -13,35 +13,38 @@ const MAX_FILE_BYTES=160*1024*1024;
 const MAX_OUTPUT_BYTES=MAX_FILE_BYTES;
 const MAX_INPUT_TOTAL_BYTES=MAX_FILE_BYTES;
 let sources=[],pdfDoc=null,pdfTask=null,current=0,generation=0,previewGeneration=0,pdfPromise=null,previewTimer=null,preferencesTimer=null,busy=false,previewValid=false,lastRecords=[],loadedDemo=true,sessionActive=false,preferencesDirty=false;
-const numericPreferences=['density','opacity','size','angle','rx','ry','rw','rh','dpi','longSide','quality'],booleanPreferences=['hiddenMark','metadata','timePrefix'],textPreferences=['mode','text','color','scope'];
+const numericPreferences=['density','opacity','size','angle','rx','ry','rw','rh','dpi','longSide','quality'],booleanPreferences=['hiddenMark','metadata','timePrefix'],textPreferences=['text','color','scope'];
 let settingsStorage;try{settingsStorage=globalThis.localStorage;}catch{}
 let savedPreferences=preferences.readPreferences(settingsStorage);
 function status(s,error=false){$('status').textContent=s;$('status').classList.toggle('error',error);}
-function currentPreferences(){const config={};for(const id of numericPreferences)config[id]=Number($(id).value);for(const id of booleanPreferences)config[id]=$(id).checked;for(const id of textPreferences)config[id]=$(id).value;return config;}
-function applyPreferences(config){if(!config)return;for(const [id,value]of Object.entries(config)){if(booleanPreferences.includes(id))$(id).checked=value;else $(id).value=String(value);}}
+function currentMode(){return $('addVisibleWatermark').checked?'add':'flatten';}
+function currentPreferences(){const config={mode:currentMode()};for(const id of numericPreferences)config[id]=Number($(id).value);for(const id of booleanPreferences)config[id]=$(id).checked;for(const id of textPreferences)config[id]=$(id).value;return config;}
+function applyPreferences(config){if(!config)return;for(const [id,value]of Object.entries(config)){if(id==='mode')$('addVisibleWatermark').checked=value==='add';else if(booleanPreferences.includes(id))$(id).checked=value;else $(id).value=String(value);}}
+function updateLeaveHint(){const active=sessionActive||preferencesDirty||busy;$('leaveHint').textContent=active?'本次操作已启用离开提醒：刷新／关闭时将请求浏览器确认。配置记忆只恢复已保存参数，材料、随机编号、页码和未保存记录仍会丢失。':'尚无新的会话操作。修改设置或选入材料后，刷新／关闭时将请求浏览器确认（是否显示由浏览器决定）。';}
+function markSessionActive(){sessionActive=true;updateLeaveHint();}
 function updatePreferenceHistory(){const select=$('configHistory'),selected=select.value;select.innerHTML='';const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent=savedPreferences.history.length?'选择需要恢复的配置':'尚无保存的配置';select.append(placeholder);for(const entry of savedPreferences.history){const option=document.createElement('option');option.value=entry.id;option.textContent=new Date(entry.time).toLocaleString()+' · '+entry.summary+' · '+(entry.config.dpi||300)+' dpi';select.append(option);}if(savedPreferences.history.some(entry=>entry.id===selected))select.value=selected;}
 function persistPreferences(){clearTimeout(preferencesTimer);preferencesTimer=null;if(!$('rememberConfig').checked)return;savedPreferences=preferences.writePreferences(settingsStorage,currentPreferences());if(savedPreferences.saved)preferencesDirty=false;updatePreferenceHistory();$('configStatus').textContent=savedPreferences.error?'本机保存失败；设置仅在当前页面保留，请勿依赖刷新恢复。':'已保存在本机浏览器，含水印文案；不保存材料或追踪记录。';}
-function schedulePreferences(){sessionActive=true;preferencesDirty=true;clearTimeout(preferencesTimer);if($('rememberConfig').checked)preferencesTimer=setTimeout(persistPreferences,450);}
+function schedulePreferences(){markSessionActive();preferencesDirty=true;clearTimeout(preferencesTimer);if($('rememberConfig').checked)preferencesTimer=setTimeout(persistPreferences,450);}
 function clearSavedPreferences(){clearTimeout(preferencesTimer);preferencesTimer=null;preferencesDirty=true;const result=preferences.clearPreferences(settingsStorage);savedPreferences=preferences.readPreferences(settingsStorage);$('rememberConfig').checked=false;updatePreferenceHistory();$('configStatus').textContent=result.error?'清除本机配置失败，请检查浏览器存储设置；当前页面已停止保存。':'已清除配置历史并关闭记住配置，当前设置仍可继续使用。';}
 applyPreferences(savedPreferences.latest);$('rememberConfig').checked=savedPreferences.enabled&&!savedPreferences.error;updatePreferenceHistory();$('configStatus').textContent=savedPreferences.error?'此浏览器无法使用本机配置存储，设置仅在当前页面保留。':!savedPreferences.enabled?'记住配置已关闭，设置仅在当前页面保留。':savedPreferences.latest?'已恢复本机保存的配置；请重新导入材料。':'配置变化后将自动保存到本机，可随时关闭并清除。';
-globalThis.addEventListener('beforeunload',event=>{if(preferencesTimer)persistPreferences();if(sessionActive||preferencesDirty||busy){event.preventDefault();event.returnValue='';}});
+globalThis.addEventListener('beforeunload',event=>{if(preferencesTimer)persistPreferences();if(sessionActive||preferencesDirty||busy){event.preventDefault();event.returnValue=true;}});
 function freshTrace(){const b=crypto.getRandomValues(new Uint8Array(8));$('trace').value=[...b].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();}
 function settings(){
- const mode=$('mode').value;let region={x:0,y:0,w:100,h:100};if($('scope').value==='top')region.h=50;if($('scope').value==='bottom'){region.y=50;region.h=50;}
+ const mode=currentMode();let region={x:0,y:0,w:100,h:100};if($('scope').value==='top')region.h=50;if($('scope').value==='bottom'){region.y=50;region.h=50;}
  if(mode!=='flatten'&&$('scope').value==='custom'){region={x:Number($('rx').value),y:Number($('ry').value),w:Number($('rw').value),h:Number($('rh').value)};if(!Object.values(region).every(Number.isFinite)||region.x<0||region.y<0||region.w<=0||region.h<=0||region.x+region.w>100||region.y+region.h>100)throw Error('自定义覆盖矩形必须位于页面内。');}
  return {mode,text:$('text').value.trim(),opacity:Number($('opacity').value)/100,size:Number($('size').value),angle:Number($('angle').value),density:Number($('density').value),color:$('color').value,region};
 }
 function total(){return pdfDoc?.numPages||sources.length;}
 function updateControls(){
- const flatten=$('mode').value==='flatten';
+ const flatten=currentMode()==='flatten';updateLeaveHint();
  ['opacity','size','angle','density','quality'].forEach(id=>$(id+'Value').textContent=$(id).value+(id==='angle'?'°':id==='opacity'||id==='quality'?'%':''));
  $('pagesBox').hidden=total()<2;$('regionBox').hidden=flatten||$('scope').value!=='custom';$('pageLabel').textContent=total()?`${current+1} / ${total()}`:'无材料';
  $('textLabel').textContent=flatten?'补充用途说明（可留空，仅写入勾选的元信息）':'用途、接收方和日期（可换行）';
- $('modeHint').textContent=flatten?'把 PDF 每页的文字和已有水印一起合入图片像素，不叠加新的可见文字。点击“保存图片型 PDF”完成转换，也可保存当前页 PNG/JPEG；图片输入保留原有外观。原文字将无法选中或搜索，已有暗标记可能保留。':'添加新的用途水印，导出时与页面图像融合。';
+ $('modeHint').textContent=flatten?'保留材料现有外观，不叠加新的可见水印；PDF 仍直接导出为图片型。原有文字和水印一起成为像素，隐藏标记与元信息可独立选择。':'新水印与页面一起合成；保存 PDF 就是图片型 PDF，无需另做转换。';
  const locked=busy||!total()||!previewValid||(!flatten&&!$('text').value.trim());['png','jpg','pdf'].forEach(id=>$(id).disabled=locked);
  $('prev').disabled=busy||current===0;$('next').disabled=busy||current>=total()-1;$('manifest').disabled=!lastRecords.length||busy;
  $('file').disabled=$('demo').disabled=$('clear').disabled=$('sampleImages').disabled=$('samplePdf').disabled=busy;
- ['mode','text','dpi','longSide','quality','hiddenMark','metadata','timePrefix','trace','newTrace','pages','verifyFile','rememberConfig','configHistory','clearConfig'].forEach(id=>$(id).disabled=busy);$('restoreConfig').disabled=busy||!$('configHistory').value;
+ ['addVisibleWatermark','text','dpi','longSide','quality','hiddenMark','metadata','timePrefix','trace','newTrace','pages','verifyFile','rememberConfig','configHistory','clearConfig'].forEach(id=>$(id).disabled=busy);$('restoreConfig').disabled=busy||!$('configHistory').value;
  ['density','opacity','size','angle','color','scope','rx','ry','rw','rh'].forEach(id=>$(id).disabled=busy||flatten);
 }
 async function pdfLibrary(){
@@ -94,18 +97,21 @@ async function exportFiles(format){
 }
 $('png').onclick=()=>exportFiles('png');$('jpg').onclick=()=>exportFiles('jpg');$('pdf').onclick=()=>exportFiles('pdf');
 $('manifest').onclick=()=>save(core.utf8(JSON.stringify({tool:'Offline Document Watermark',version:core.VERSION,records:lastRecords},null,2)),'application/json','watermark-trace-records.json');
-$('prev').onclick=()=>{if(current>0){current--;preview();}};$('next').onclick=()=>{if(current<total()-1){current++;preview();}};
-$('newTrace').onclick=()=>{sessionActive=true;freshTrace();};$('demo').onclick=showDemo;$('clear').onclick=async()=>{if(busy)return;busy=true;updateControls();try{persistPreferences();await cleanup();clearVerification();$('file').value='';freshTrace();await preview();sessionActive=false;status('本次材料、验证结果和追踪记录已清空。已记住的配置可在“本机配置与历史”中清除。');}finally{busy=false;updateControls();}};
+$('prev').onclick=()=>{if(!busy&&current>0){markSessionActive();current--;preview();}};$('next').onclick=()=>{if(!busy&&current<total()-1){markSessionActive();current++;preview();}};
+$('newTrace').onclick=()=>{markSessionActive();freshTrace();};$('demo').onclick=()=>{if(busy)return;markSessionActive();return showDemo();};$('clear').onclick=async()=>{if(busy)return;busy=true;updateControls();try{persistPreferences();await cleanup();clearVerification();$('file').value='';freshTrace();await preview();sessionActive=false;status('本次材料、验证结果和追踪记录已清空。已记住的配置可在“本机配置与历史”中清除。');}finally{busy=false;updateControls();}};
 async function showPublicSamples(asPdf){if(busy)return;busy=true;updateControls();try{await cleanup();loadedDemo=true;$('fileNames').textContent=asPdf?'当前使用内置公开两页 PDF 样本。':'当前使用内置公开样本图片（2 张）。';status('正在本地加载公开演示样本…');if(asPdf){const pages=bundle.samples.map(s=>({width:s.width,height:s.height,jpeg:decode64(s.jpeg)}));await openPdf(core.buildPdf(pages));}else{for(const s of bundle.samples)sources.push(await imageSource(new Blob([decode64(s.jpeg)],{type:'image/jpeg'})));}freshTrace();if(await preview())status('已加载两个公开演示样本，不含真实身份证或私人测评结果。');}catch(e){await cleanup();await preview();status(e.message,true);}finally{busy=false;updateControls();}}
-$('sampleImages').onclick=()=>showPublicSamples(false);$('samplePdf').onclick=()=>showPublicSamples(true);
-['mode','text','density','opacity','size','angle','color','scope','rx','ry','rw','rh'].forEach(id=>$(id).addEventListener('input',schedulePreview));['dpi','longSide','quality','hiddenMark','metadata'].forEach(id=>$(id).addEventListener('input',updateControls));
-for(const id of [...numericPreferences,...booleanPreferences,...textPreferences])$(id).addEventListener('input',schedulePreferences);
+$('sampleImages').onclick=()=>{if(busy)return;markSessionActive();return showPublicSamples(false);};$('samplePdf').onclick=()=>{if(busy)return;markSessionActive();return showPublicSamples(true);};
+for(const event of ['input','change']){
+ ['addVisibleWatermark','text','density','opacity','size','angle','color','scope','rx','ry','rw','rh'].forEach(id=>$(id).addEventListener(event,schedulePreview));['dpi','longSide','quality','hiddenMark','metadata','timePrefix'].forEach(id=>$(id).addEventListener(event,updateControls));
+ for(const id of [...numericPreferences,...booleanPreferences,...textPreferences,'addVisibleWatermark'])$(id).addEventListener(event,schedulePreferences);
+ for(const id of ['trace','pages'])$(id).addEventListener(event,markSessionActive);
+}
 $('rememberConfig').addEventListener('change',()=>{sessionActive=true;if($('rememberConfig').checked)persistPreferences();else clearSavedPreferences();updateControls();});$('clearConfig').onclick=()=>{sessionActive=true;clearSavedPreferences();updateControls();};$('configHistory').addEventListener('change',updateControls);$('restoreConfig').onclick=()=>{if(busy)return;const entry=savedPreferences.history.find(item=>item.id===$('configHistory').value);if(entry){applyPreferences(entry.config);schedulePreferences();schedulePreview();$('configStatus').textContent='已恢复所选配置。导入材料仍需自行选择，当前编号保持不变。';}};
 $('verifyFile').addEventListener('change',async e=>{
  const f=e.target.files[0];if(busy||!f)return;busy=true;sessionActive=true;updateControls();$('verifyName').textContent='验证文件：'+f.name;const box=$('verification');box.textContent='正在本地验证…';try{if(f.size>MAX_FILE_BYTES)throw Error('验证文件超过 160 MiB。');const bytes=new Uint8Array(await f.arrayBuffer()),isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name);let metadata,pixelBlob;
   if(isPdf){const own=core.inspectOwnPdf(bytes);metadata=own.metadata;if(own.jpeg)pixelBlob=new Blob([own.jpeg],{type:'image/jpeg'});}else{metadata=core.readMetadata(bytes);pixelBlob=f;}
   let mark=null;if(pixelBlob){const im=await decodeImage(pixelBlob),c=document.createElement('canvas');try{if(im.naturalWidth*im.naturalHeight>24000000)throw Error('验证图片超过 2400 万像素。');c.width=im.naturalWidth;c.height=im.naturalHeight;const p=c.getContext('2d');p.drawImage(im,0,0);mark=core.detectTrace(p.getImageData(0,0,c.width,c.height));}finally{c.width=c.height=1;releaseImage(im);}}
-  const purpose=metadata?.processingMode==='flatten'?`处理方式：保留原外观转为图片，未提取原有水印文字。\n补充用途说明：${metadata.purposeNote||'无'}`:`用途水印：${metadata?.watermark||'无'}`;
+  const purpose=metadata?.processingMode==='flatten'?`可见水印：未新增，保留原有外观；未提取原有水印文字。\n补充用途说明：${metadata.purposeNote||'无'}`:`用途水印：${metadata?.watermark||'无'}`;
   const lines=[metadata?`元信息编号：${metadata.traceId||'无'}\n${purpose}`:'未发现本工具的元信息。',mark?`隐藏像素标记编号：${mark.traceId}`:'未检出有效隐藏像素标记（可能未嵌入或已被处理破坏）。'];if(metadata&&mark)lines.push(metadata.traceId===mark.traceId?'元信息与隐藏编号一致。':'两个编号不一致，请核对原始记录。');if(metadata&&!mark)lines.push('目前只读到元信息；不能据此确认隐藏像素标记仍有效。');if(isPdf)lines.push('像素验证仅覆盖本工具 PDF 格式的第一页。');lines.push('可将编号与自己保存的接收方记录核对；它不是文件真实性认证，也不能单独证明由谁传播。');box.textContent=lines.join('\n\n');
  }catch(err){box.textContent='验证失败：'+err.message;}finally{busy=false;e.target.value='';updateControls();}
 });

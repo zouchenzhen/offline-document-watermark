@@ -74,7 +74,7 @@ test('read discards invalid history, deduplicates snapshots, and can recover a d
  const state=readPreferences(storage);assert.equal(state.latest.text,'A');assert.equal(state.history.length,2);assert.equal(state.history[0].time,clock(2));assert.deepEqual(state.history[0].config,{text:'A'});
 });
 test('summaries are short plain strings, not interpreted markup or persisted redundant data',()=>{
- const config={mode:'flatten',density:3,quality:92,text:'<img src=x>\n'+'用途'.repeat(30)};const summary=summarizePreferences(config);assert(summary.startsWith('原页转图片 · 密度 3 · 质量 92% · <img src=x> '));assert(summary.endsWith('…'));assert(!summary.includes('\n'));
+ const config={mode:'flatten',density:3,quality:92,text:'<img src=x>\n'+'用途'.repeat(30)};const summary=summarizePreferences(config);assert(summary.startsWith('不新增可见水印 · 密度 3 · 质量 92% · <img src=x> '));assert(summary.endsWith('…'));assert(!summary.includes('\n'));
  const storage=memoryStorage();writePreferences(storage,config,{now:clock(0)});assert(!storage.values.get(PREFERENCES_STORAGE_KEY).includes('summary'));assert.equal(summarizePreferences({traceId:'FORBIDDEN'}),'无有效配置');
 });
 test('untrusted prototype keys and getters cannot enter the serialized configuration',()=>{
@@ -83,4 +83,12 @@ test('untrusted prototype keys and getters cannot enter the serialized configura
 });
 test('invalid clocks and invalid configurations leave the last saved state unchanged',()=>{
  const storage=memoryStorage();writePreferences(storage,{text:'Prior'},{now:new Date(clock(0))});for(const now of ['invalid','12',null,0])assert.equal(writePreferences(storage,{text:'Later'},{now}).saved,false);assert.equal(writePreferences(storage,{density:0},{now:clock(1)}).saved,false);assert.equal(readPreferences(storage).latest.text,'Prior');
+});
+
+test('legacy mode values remain persistent while the new UI checkbox and page range are not stored',()=>{
+ for(const mode of ['add','flatten']){
+  const storage=memoryStorage(),config={...complete,mode,addVisibleWatermark:mode!=='add',pages:'1-3,5'};assert(writePreferences(storage,config,{now:clock(0)}).saved);
+  const state=readPreferences(storage);assert.equal(state.latest.mode,mode);assert(!Object.hasOwn(state.latest,'addVisibleWatermark'));assert(!Object.hasOwn(state.latest,'pages'));assert(!storage.values.get(PREFERENCES_STORAGE_KEY).includes('addVisibleWatermark'));assert(!storage.values.get(PREFERENCES_STORAGE_KEY).includes('"pages"'));
+  assert(state.history[0].summary.startsWith(mode==='add'?'添加可见水印':'不新增可见水印'));
+ }
 });

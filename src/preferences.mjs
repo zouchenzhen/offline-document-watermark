@@ -49,7 +49,7 @@ export function sanitizePreferences(input){
 
 export function summarizePreferences(input){
  const config=sanitizePreferences(input);if(!config)return '无有效配置';
- const parts=[config.mode==='flatten'?'原页转图片':'用途水印'];
+ const parts=[config.mode==='flatten'?'不新增可见水印':'添加可见水印'];
  if(own(config,'density'))parts.push('密度 '+config.density);
  if(own(config,'quality'))parts.push('质量 '+config.quality+'%');
  if(config.text){const text=config.text.replace(/\s+/g,' ');parts.push(text.slice(0,32)+(text.length>32?'…':''));}
