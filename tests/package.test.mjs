@@ -60,14 +60,16 @@ test('release archive retains notices and validates HTML and ZIP without a circu
   await fs.writeFile(path.join(tempRoot, 'package.json'), '{"version":"1.2.3"}');
   const htmlName = 'offline-watermark-v1.2.3.html', zipName = 'offline-watermark-v1.2.3.zip', html = Buffer.from('<!doctype html>\nOffline demo\n');
   await fs.writeFile(path.join(tempRoot, 'dist', htmlName), html);
-  const fixtureFiles = ['LICENSE', 'LICENSE_NOTES.md', 'PRIVACY.md', 'THIRD_PARTY_NOTICES.md', 'NOTICE', 'docs/examples/ATTRIBUTION.md', 'docs/examples/id-card-source.json'];
+  const fixtureFiles = ['LICENSE', 'LICENSE_NOTES.md', 'PRIVACY.md', 'PRIVACY.en.md', 'THIRD_PARTY_NOTICES.md', 'NOTICE', 'docs/examples/ATTRIBUTION.md', 'docs/examples/id-card-source.json'];
   for (const file of fixtureFiles) await fs.writeFile(path.join(tempRoot, file), `Public notice: ${path.basename(file)}\r\n`);
   const firstResult = await packageRelease(tempRoot), first = await fs.readFile(path.join(tempRoot, 'dist', zipName));
   const secondResult = await packageRelease(tempRoot), second = await fs.readFile(path.join(tempRoot, 'dist', zipName));
   assert.deepEqual(first, second);
   assert.equal(firstResult.manifest, secondResult.manifest);
   const entries = readStoredZip(first);
-  assert.deepEqual([...entries.keys()], ['ATTRIBUTION.md', 'LICENSE', 'LICENSE_NOTES.md', 'NOTICE', 'PRIVACY.md', 'SHA256SUMS.txt', 'THIRD_PARTY_NOTICES.md', 'id-card-source.json', htmlName]);
+  assert.deepEqual([...entries.keys()], ['ATTRIBUTION.md', 'LICENSE', 'LICENSE_NOTES.md', 'NOTICE', 'PRIVACY.en.md', 'PRIVACY.md', 'SHA256SUMS.txt', 'THIRD_PARTY_NOTICES.md', 'id-card-source.json', htmlName]);
+  assert.equal(entries.get('PRIVACY.md').toString(), 'Public notice: PRIVACY.md\n');
+  assert.equal(entries.get('PRIVACY.en.md').toString(), 'Public notice: PRIVACY.en.md\n');
   assert.deepEqual(entries.get(htmlName), html);
   const sha = data => crypto.createHash('sha256').update(data).digest('hex');
   const inner = `${sha(html)}  ${htmlName}\n`;

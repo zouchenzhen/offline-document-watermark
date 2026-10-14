@@ -59,17 +59,17 @@ test('closing style tags in CSS source cannot create an extra script element', (
   assert.equal((outsideStyle.match(/<script\b/gi) || []).length, 2);
 });
 
-function runBootstrap(app) {
+function runBootstrap(app,language='zh-CN') {
   const html = assembleHtml({ template, css: '', bundle: {}, app, version: '0.3.0' });
   const { json, loader } = extract(html);
   // A standard Node module VM evaluates the actual generated bootstrap and Blob
   // module. This is a code regression check, not a browser compatibility claim.
   const childSource = `
 import vm from 'node:vm';
-const input = ${JSON.stringify({ json, loader })};
+const input = ${JSON.stringify({ json, loader, language })};
 const elements = Object.fromEntries(['png','jpg','pdf','manifest','status','bundle'].map(id => [id, {disabled:false,textContent:id === 'bundle' ? input.json : '',classes:[],classList:{add(value){elements[id].classes.push(value);}}}]));
 const blobs = new Map(), revoked = [], errors = [];
-const context = vm.createContext({document:{getElementById:id=>elements[id]},atob,TextDecoder,Uint8Array,Blob,URL:{createObjectURL(blob){const url='blob:synthetic/'+blobs.size;blobs.set(url,blob);return url;},revokeObjectURL(url){revoked.push(url);blobs.delete(url);}},console:{error(...args){errors.push(String(args[0]));}}});
+const context = vm.createContext({document:{documentElement:{lang:input.language},getElementById:id=>elements[id]},atob,TextDecoder,Uint8Array,Blob,URL:{createObjectURL(blob){const url='blob:synthetic/'+blobs.size;blobs.set(url,blob);return url;},revokeObjectURL(url){revoked.push(url);blobs.delete(url);}},console:{error(...args){errors.push(String(args[0]));}}});
 const loader = new vm.SourceTextModule(input.loader, {context,importModuleDynamically:async url => {
   const module = new vm.SourceTextModule(await blobs.get(url).text(), {context});
   await module.link(() => {throw Error('Unexpected external module import.');});
@@ -103,4 +103,7 @@ test('bootstrap failures show a visible error and keep all export buttons disabl
     assert.equal(result.errors, 1);
     assert.equal(result.revoked, 1);
   }
+});
+test('bootstrap failure respects an English interface while disabling all exports',()=>{
+ const result=runBootstrap('throw new Error("Synthetic failure after English restore");','en');assert.deepEqual(result.disabled,[true,true,true,true]);assert.match(result.status,/could not load|failed to load/i);assert(!/[\u3400-\u9fff]/u.test(result.status));assert(result.errorClass);assert.equal(result.errors,1);
 });

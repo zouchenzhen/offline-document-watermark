@@ -76,6 +76,7 @@ const documents = [
   ['LICENSE', 'LICENSE'],
   ['LICENSE_NOTES.md', 'LICENSE_NOTES.md'],
   ['PRIVACY.md', 'PRIVACY.md'],
+  ['PRIVACY.en.md', 'PRIVACY.en.md'],
   ['THIRD_PARTY_NOTICES.md', 'THIRD_PARTY_NOTICES.md'],
   ['NOTICE', 'NOTICE'],
   ['ATTRIBUTION.md', 'docs/examples/ATTRIBUTION.md'],

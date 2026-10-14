@@ -28,7 +28,23 @@ try {
   }
   const status = document.getElementById('status');
   if (status) {
-    status.textContent = '工具加载失败，请重新打开此文件或重新下载完整离线文件。';
+    const failureMessages = {
+      'zh-CN': '工具加载失败，请重新打开此文件或重新下载完整离线文件。',
+      en: 'The tool could not load. Reopen this file or download the complete offline file again.'
+    };
+    const showFailure = language => {
+      if (document.documentElement) document.documentElement.lang = language;
+      status.textContent = failureMessages[language];
+      for (const [id, value] of [['languageZh', 'zh-CN'], ['languageEn', 'en']]) {
+        const button = document.getElementById(id);
+        if (button) button.setAttribute?.('aria-pressed', String(value === language));
+      }
+    };
+    showFailure(document.documentElement?.lang === 'en' ? 'en' : 'zh-CN');
+    for (const [id, language] of [['languageZh', 'zh-CN'], ['languageEn', 'en']]) {
+      const button = document.getElementById(id);
+      if (button) { button.disabled = false; button.onclick = () => showFailure(language); }
+    }
     status.classList.add('error');
   }
   console.error('Offline Document Watermark startup failed.', error);
@@ -79,7 +95,7 @@ export function buildProject() {
       if (name.startsWith('LICENSE')) licenses[folder + '/' + name] = read('vendor/pdfjs/' + folder + '/' + name);
     }
   }
-  const bundle = { core: text64('src/core.mjs'), preferences: text64('src/preferences.mjs'), workerAssets: text64('src/worker-assets.mjs'), pdf: text64('vendor/pdfjs/pdf.min.mjs'), worker: text64('vendor/pdfjs/pdf.worker.min.mjs'), assets, samples, licenses };
+  const bundle = { core: text64('src/core.mjs'), preferences: text64('src/preferences.mjs'), i18n: text64('src/i18n.mjs'), workerAssets: text64('src/worker-assets.mjs'), pdf: text64('vendor/pdfjs/pdf.min.mjs'), worker: text64('vendor/pdfjs/pdf.worker.min.mjs'), assets, samples, licenses };
   const html = assembleHtml({ template: read('src/index.template.html'), css: read('src/style.css'), bundle, app: read('src/app.mjs'), version });
   const out = path.join(root, 'dist');
   fs.mkdirSync(path.join(out, 'site'), { recursive: true });
@@ -88,7 +104,7 @@ export function buildProject() {
   const sums = crypto.createHash('sha256').update(Buffer.from(html)).digest('hex') + '  ' + htmlName + '\n';
   fs.writeFileSync(path.join(out, 'SHA256SUMS.txt'), sums);
   fs.writeFileSync(path.join(out, 'site/SHA256SUMS.txt'), sums);
-  for (const name of ['LICENSE', 'LICENSE_NOTES.md', 'PRIVACY.md', 'THIRD_PARTY_NOTICES.md']) fs.copyFileSync(path.join(root, name), path.join(out, name));
+  for (const name of ['LICENSE', 'LICENSE_NOTES.md', 'PRIVACY.md', 'PRIVACY.en.md', 'THIRD_PARTY_NOTICES.md']) fs.copyFileSync(path.join(root, name), path.join(out, name));
   fs.writeFileSync(path.join(out, 'site/.nojekyll'), '');
   console.log('Built self-contained HTML: ' + (Buffer.byteLength(html) / 1024 / 1024).toFixed(2) + ' MiB. SHA-256 manifest written.');
 }

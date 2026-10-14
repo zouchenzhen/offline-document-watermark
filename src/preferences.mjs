@@ -6,7 +6,7 @@ export const PREFERENCES_STORAGE_KEY='offline-document-watermark.preferences.v1'
 export const PREFERENCES_HISTORY_LIMIT=10;
 export const PREFERENCES_FIELDS=Object.freeze([
  'mode','text','density','opacity','size','angle','color','scope','rx','ry','rw','rh',
- 'dpi','longSide','quality','hiddenMark','metadata','timePrefix',
+ 'dpi','longSide','quality','hiddenMark','metadata','timePrefix','language',
 ]);
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 const isObject=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
@@ -14,7 +14,7 @@ const numberRules={
  density:[1,8,.5],opacity:[15,85,1],size:[14,40,1],angle:[-60,60,1],
  rx:[0,99,1],ry:[0,99,1],rw:[1,100,1],rh:[1,100,1],quality:[60,98,1],
 };
-const enumRules={mode:['add','flatten'],scope:['all','top','bottom','custom'],dpi:[150,200,300,400],longSide:[0,1600,2400,3200]};
+const enumRules={mode:['add','flatten'],scope:['all','top','bottom','custom'],dpi:[150,200,300,400],longSide:[0,1600,2400,3200],language:['zh-CN','en']};
 const booleanFields=new Set(['hiddenMark','metadata','timePrefix']);
 const emptyState=error=>({enabled:true,latest:null,history:[],error:error??null});
 const configKey=config=>JSON.stringify(config);
@@ -47,11 +47,11 @@ export function sanitizePreferences(input){
  return config;
 }
 
-export function summarizePreferences(input){
- const config=sanitizePreferences(input);if(!config)return '无有效配置';
- const parts=[config.mode==='flatten'?'不新增可见水印':'添加可见水印'];
- if(own(config,'density'))parts.push('密度 '+config.density);
- if(own(config,'quality'))parts.push('质量 '+config.quality+'%');
+export function summarizePreferences(input,{language='zh-CN'}={}){
+ const english=language==='en',config=sanitizePreferences(input);if(!config)return english?'No valid settings':'无有效配置';
+ const parts=[config.mode==='flatten'?(english?'No new visible watermark':'不新增可见水印'):(english?'Add visible watermark':'添加可见水印')];
+ if(own(config,'density'))parts.push((english?'Density ':'密度 ')+config.density);
+ if(own(config,'quality'))parts.push((english?'Quality ':'质量 ')+config.quality+'%');
  if(config.text){const text=config.text.replace(/\s+/g,' ');parts.push(text.slice(0,32)+(text.length>32?'…':''));}
  return parts.join(' · ');
 }

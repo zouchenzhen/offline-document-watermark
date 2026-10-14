@@ -11,7 +11,7 @@ function memoryStorage(initial=null){
 }
 const complete={
  mode:'add',text:'仅供示例审核\n其他用途无效',density:3.5,opacity:42,size:23,angle:-24,color:'#34475d',
- scope:'custom',rx:10,ry:10,rw:80,rh:80,dpi:300,longSide:2400,quality:92,hiddenMark:true,metadata:true,timePrefix:false,
+ scope:'custom',rx:10,ry:10,rw:80,rh:80,dpi:300,longSide:2400,quality:92,hiddenMark:true,metadata:true,timePrefix:false,language:'zh-CN',
 };
 const clock=n=>'2026-10-14T10:00:'+String(n).padStart(2,'0')+'.000Z';
 
