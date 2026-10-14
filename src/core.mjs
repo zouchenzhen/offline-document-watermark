@@ -1,13 +1,27 @@
 // Copyright 2026 zouchenzhen. SPDX-License-Identifier: MIT
 // Platform-neutral pixel, metadata, and image-only PDF helpers.
-export const VERSION='0.3.0';
+export const VERSION='0.4.0';
 const te=new TextEncoder(),td=new TextDecoder();
 export function concat(parts){const size=parts.reduce((n,p)=>n+p.length,0),out=new Uint8Array(size);let o=0;for(const p of parts){out.set(p,o);o+=p.length;}return out;}
 export const utf8=s=>te.encode(s);
 export function crc32(data){let c=0xffffffff;for(const b of data){c^=b;for(let j=0;j<8;j++)c=(c>>>1)^((c&1)?0xedb88320:0);}return (c^0xffffffff)>>>0;}
 function u32(n){return new Uint8Array([n>>>24,n>>>16&255,n>>>8&255,n&255]);}
 function read32(b,o){return ((b[o]<<24)|(b[o+1]<<16)|(b[o+2]<<8)|b[o+3])>>>0;}
-export function normalizeTrace(s){const id=s.trim().replace(/[-\s]/g,'').toUpperCase();if(!/^[0-9A-F]{16}$/.test(id))throw Error('追踪编号必须为 16 位十六进制字符。');return id;}
+const MAX_TRACE_SECONDS=0xffffffff;
+function traceTimestamp(seconds){
+ if(!Number.isInteger(seconds)||seconds<0||seconds>MAX_TRACE_SECONDS)throw Error('追踪时间超出支持范围（1970-01-01 至 2106-02-07T06:28:15Z）。');
+ const utc=new Date(seconds*1000).toISOString().replace('.000Z','Z');return {utc,prefix:utc.replace(/[-:]/g,'')};
+}
+function traceParts(s){
+ if(typeof s!=='string')throw Error('追踪编号必须为文本。');const input=s.trim().toUpperCase(),m=input.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z-([0-9A-F]{16})$/);
+ if(m){const iso=`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`,ms=Date.parse(iso);if(!Number.isFinite(ms)||new Date(ms).toISOString().replace('.000Z','Z')!==iso)throw Error('追踪时间必须是有效的 UTC 日期和秒级时间。');const seconds=ms/1000,t=traceTimestamp(seconds);return {id:m[7],seconds,utc:t.utc,traceId:t.prefix+'-'+m[7]};}
+ const id=input.replace(/[-\s]/g,'');if(!/^[0-9A-F]{16}$/.test(id))throw Error('追踪编号须为 16 位十六进制字符，或 YYYYMMDDTHHmmssZ-16位编号。');return {id,seconds:null,utc:null,traceId:id};
+}
+export function normalizeTrace(s){return traceParts(s).traceId;}
+export function makeTimestampedTrace(id,date=new Date()){
+ let ms;try{ms=Date.prototype.getTime.call(date);}catch{throw Error('导出时间必须为有效 Date，不能使用含糊的日期字符串。');}
+ if(!Number.isFinite(ms))throw Error('导出时间必须为有效 Date。');const t=traceTimestamp(Math.floor(ms/1000));return t.prefix+'-'+traceParts(id).id;
+}
 export function parsePages(text,total){if(!text.trim())return Array.from({length:total},(_,i)=>i+1);const out=new Set();for(const raw of text.split(/[,，]/)){const part=raw.trim(),m=part.match(/^(\d+)(?:\s*-\s*(\d+))?$/);if(!m)throw Error('页码示例：1-3,5。');const a=Number(m[1]),b=Number(m[2]||m[1]);if(a<1||b<a||b>total)throw Error('页码超出范围或顺序不正确。');for(let n=a;n<=b;n++)out.add(n);}return [...out].sort((a,b)=>a-b);}
 export function scaledSize(w,h,longSide=0,maxPixels=24000000){
  if(!Number.isFinite(w)||!Number.isFinite(h)||w<=0||h<=0)throw Error('图片尺寸无效。');
@@ -37,7 +51,7 @@ export function paintWatermark(ctx,w,h,s){
 const ba=new Float64Array(64),bb=new Float64Array(64);
 const TRACE_MARGIN=22,TRACE_PIXEL_LIMIT=10;
 for(let y=0;y<8;y++)for(let x=0;x<8;x++){ba[y*8+x]=0.25*Math.cos((2*x+1)*2*Math.PI/16)*Math.cos((2*y+1)*3*Math.PI/16);bb[y*8+x]=0.25*Math.cos((2*x+1)*3*Math.PI/16)*Math.cos((2*y+1)*2*Math.PI/16);}
-function tracePacket(id){const t=normalizeTrace(id),payload=new Uint8Array(12);payload.set(utf8('OWM2'));for(let i=0;i<8;i++)payload[4+i]=parseInt(t.slice(i*2,i*2+2),16);return concat([payload,u32(crc32(payload))]);}
+function tracePacket(id){const t=traceParts(id),timed=t.seconds!==null,payload=new Uint8Array(timed?16:12);payload.set(utf8(timed?'OWM3':'OWM2'));if(timed)payload.set(u32(t.seconds),4);for(let i=0;i<8;i++)payload[(timed?8:4)+i]=parseInt(t.id.slice(i*2,i*2+2),16);return concat([payload,u32(crc32(payload))]);}
 function validatePixels(image){
  const {width,height,data}=image||{};
  if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1||width*height>24000000||!(data instanceof Uint8ClampedArray)&&!(data instanceof Uint8Array)||data.length!==width*height*4)throw Error('像素数据或图片尺寸无效。');
@@ -45,7 +59,7 @@ function validatePixels(image){
 export function embedTrace(image,id,strength=TRACE_MARGIN){
  validatePixels(image);if(!Number.isFinite(strength)||strength<=0||strength>64)throw Error('隐藏标记强度无效。');
  const {width:w,height:h,data}=image,packet=tracePacket(id),bits=packet.length*8;let k=0;
- if(Math.floor(w/8)*Math.floor(h/8)<bits*3)throw Error('图片太小，无法嵌入隐藏标记（至少需要约 160×160 像素；满足尺寸也不保证检出）。');
+ const minSide=Math.ceil(Math.sqrt(bits*3))*8;if(Math.floor(w/8)*Math.floor(h/8)<bits*3)throw Error(`图片太小，无法嵌入当前隐藏标记（至少需要约 ${minSide}×${minSide} 像素；满足尺寸也不保证检出）。`);
  for(let by=0;by+8<=h;by+=8)for(let bx=0;bx+8<=w;bx+=8,k++){
   let a=0,b=0;for(let y=0;y<8;y++)for(let x=0;x<8;x++){const j=((by+y)*w+bx+x)*4,q=y*8+x,v=(data[j]+data[j+1]+data[j+2])/3-128;a+=v*ba[q];b+=v*bb[q];}
   const bit=(packet[Math.floor((k%bits)/8)]>>(7-k%8))&1,diff=a-b;
@@ -59,17 +73,21 @@ export function embedTrace(image,id,strength=TRACE_MARGIN){
  return image;
 }
 export function detectTrace(image){
- validatePixels(image);const {width:w,height:h,data}=image,sums=new Float64Array(128),legacySums=new Float64Array(128),counts=new Uint32Array(128);let k=0;
+ validatePixels(image);const {width:w,height:h,data}=image,candidates=[160,128].map(bits=>({bits,sums:new Float64Array(bits),legacySums:new Float64Array(bits),counts:new Uint32Array(bits)}));let k=0;
  for(let by=0;by+8<=h;by+=8)for(let bx=0;bx+8<=w;bx+=8,k++){
   let v=0;for(let y=0;y<8;y++)for(let x=0;x<8;x++){const j=((by+y)*w+bx+x)*4,q=y*8+x;v+=((data[j]+data[j+1]+data[j+2])/3-128)*(ba[q]-bb[q]);}
   // Bound each block's vote: a few saturated high-contrast blocks must not
   // overwhelm many repetitions. Keep the previous aggregation as a fallback
   // for already exported files; both candidates require the header and CRC.
-  sums[k%128]+=Math.max(-TRACE_MARGIN,Math.min(TRACE_MARGIN,v));legacySums[k%128]+=v;counts[k%128]++;
+  const bounded=Math.max(-TRACE_MARGIN,Math.min(TRACE_MARGIN,v));for(const c of candidates){const i=k%c.bits;c.sums[i]+=bounded;c.legacySums[i]+=v;c.counts[i]++;}
  }
- if(!counts.every(n=>n>=3))return null;
- for(const candidate of [sums,legacySums]){const packet=new Uint8Array(16);for(let i=0;i<128;i++)if(candidate[i]>0)packet[i>>3]|=1<<(7-i%8);
-  if(td.decode(packet.slice(0,4))==='OWM2'&&read32(packet,12)===crc32(packet.slice(0,12)))return {traceId:[...packet.slice(4,12)].map(n=>n.toString(16).padStart(2,'0')).join('').toUpperCase(),repetitions:Math.min(...counts)};
+ for(const c of candidates){if(!c.counts.every(n=>n>=3))continue;
+  for(const candidate of [c.sums,c.legacySums]){const packet=new Uint8Array(c.bits/8);for(let i=0;i<c.bits;i++)if(candidate[i]>0)packet[i>>3]|=1<<(7-i%8);
+   const timed=c.bits===160,payloadBytes=timed?16:12,format=timed?'OWM3':'OWM2';if(td.decode(packet.subarray(0,4))!==format||read32(packet,payloadBytes)!==crc32(packet.subarray(0,payloadBytes)))continue;
+   const id=[...packet.subarray(timed?8:4,payloadBytes)].map(n=>n.toString(16).padStart(2,'0')).join('').toUpperCase(),result={traceId:id,repetitions:Math.min(...c.counts),format};
+   if(timed){const seconds=read32(packet,4),t=traceTimestamp(seconds);result.traceId=t.prefix+'-'+id;result.timestampSeconds=seconds;result.timestampUtc=t.utc;}
+   return result;
+  }
  }
  return null;
 }

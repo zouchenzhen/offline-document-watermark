@@ -1,7 +1,7 @@
 name: Validate candidate and deploy isolated preview
 on:
   push:
-    branches: [hardening-v0.3.0]
+    branches: ['hardening-v*']
 permissions:
   contents: read
   pages: write
@@ -12,6 +12,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,6 +25,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Read candidate version
+        id: version
+        working-directory: candidate
+        run: node -e "const fs=require('node:fs'),v=JSON.parse(fs.readFileSync('package.json')).version;if(!/^\d+\.\d+\.\d+$/.test(v))throw Error('Invalid version');fs.appendFileSync(process.env.GITHUB_OUTPUT,'version='+v+'\n')"
       - run: npm test
         working-directory: candidate
       - run: npm run test:pdf
@@ -68,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}preview/v0.3.0/
+      url: ${{ steps.deployment.outputs.page_url }}preview/v${{ needs.build.outputs.version }}/
     steps:
       - name: Deploy stable plus preview
         id: deployment

@@ -79,7 +79,7 @@ export function buildProject() {
       if (name.startsWith('LICENSE')) licenses[folder + '/' + name] = read('vendor/pdfjs/' + folder + '/' + name);
     }
   }
-  const bundle = { core: text64('src/core.mjs'), workerAssets: text64('src/worker-assets.mjs'), pdf: text64('vendor/pdfjs/pdf.min.mjs'), worker: text64('vendor/pdfjs/pdf.worker.min.mjs'), assets, samples, licenses };
+  const bundle = { core: text64('src/core.mjs'), preferences: text64('src/preferences.mjs'), workerAssets: text64('src/worker-assets.mjs'), pdf: text64('vendor/pdfjs/pdf.min.mjs'), worker: text64('vendor/pdfjs/pdf.worker.min.mjs'), assets, samples, licenses };
   const html = assembleHtml({ template: read('src/index.template.html'), css: read('src/style.css'), bundle, app: read('src/app.mjs'), version });
   const out = path.join(root, 'dist');
   fs.mkdirSync(path.join(out, 'site'), { recursive: true });

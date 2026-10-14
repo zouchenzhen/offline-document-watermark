@@ -1,12 +1,44 @@
 import test from 'node:test';import assert from 'node:assert/strict';import * as c from '../src/core.mjs';
 import fs from 'node:fs';import {largePdfFixture} from './large-pdf-fixture.mjs';
 import {inflateSync} from 'node:zlib';import {createHash} from 'node:crypto';
+import vm from 'node:vm';
 const trace='12AB34CD56EF7890',meta={tool:'Offline Document Watermark',traceId:trace,watermark:'仅供示例审核\n其他用途无效'};
 function pixels(w=512,h=512){const data=new Uint8ClampedArray(w*h*4);for(let i=0;i<data.length;i+=4){data[i]=210;data[i+1]=195;data[i+2]=180;data[i+3]=255;}return {width:w,height:h,data};}
 test('page ranges are validated, deduplicated and sorted',()=>{assert.deepEqual(c.parsePages('1-3,5,2',5),[1,2,3,5]);assert.deepEqual(c.parsePages('',2),[1,2]);for(const s of ['0','3-1','6','abc','1,'])assert.throws(()=>c.parsePages(s,5));});
 test('scaled images do not upscale and strictly respect pixel limits, including rounded PDF viewports',()=>{assert.equal(c.scaledSize(100,100,1600).width,100);for(const [w,h] of [[8000,6000],[6000,8000],[7680,4320],[50000000,1],[1,50000000],[123.4,456.7]]){const p=c.scaledSize(w,h,0);assert(p.width*p.height<=24000000);assert(Math.max(1,Math.round(w*p.ratio))*Math.max(1,Math.round(h*p.ratio))<=24000000);assert(p.ratio<=1);}assert.equal(c.scaledSize(4000,2000,1600).height,800);});
 test('non-finite sizes and invalid limits are rejected',()=>{for(const [w,h] of [[NaN,200],[Infinity,2],[100,Infinity],[0,100],[-1,100]])assert.throws(()=>c.scaledSize(w,h));for(const [side,pixels] of [[NaN,24000000],[-1,24000000],[100,0],[100,Infinity],[100,1.5]])assert.throws(()=>c.scaledSize(100,100,side,pixels));});
 test('trace IDs normalized without accepting arbitrary personal text',()=>{assert.equal(c.normalizeTrace('12ab-34cd-56ef-7890'),trace);assert.throws(()=>c.normalizeTrace('姓名：某某'));});
+test('timestamped trace IDs use unambiguous UTC seconds while retaining the random ID',()=>{
+ const date=new Date('2026-10-14T09:08:07.987+08:00'),id=c.makeTimestampedTrace(trace,date);assert.equal(id,'20261014T010807Z-'+trace);assert.equal(c.normalizeTrace(id.toLowerCase()),id);assert.equal(c.makeTimestampedTrace(id,new Date('2026-10-15T01:02:03Z')),'20261015T010203Z-'+trace);
+ assert.equal(c.makeTimestampedTrace('AAAAAAAAAAAAAAAA',date),'20261014T010807Z-AAAAAAAAAAAAAAAA');assert.equal(c.makeTimestampedTrace(trace,new Date('2026-10-14T01:08:07.001Z')),id);
+ assert.equal(c.makeTimestampedTrace(trace,vm.runInNewContext('new Date("2026-10-14T01:08:07.123Z")')),id);
+ assert.equal(c.normalizeTrace('20240229T000000Z-'+trace),'20240229T000000Z-'+trace);
+ for(const stamp of ['20260229T000000Z','20260431T000000Z','20260014T000000Z','20261314T000000Z','20261000T000000Z','20261014T240000Z','20261014T126000Z','20261014T120060Z','20261014T120000.001Z','2026-10-14T12:00:00Z','20261014T120000+0800','19691231T235959Z','21060207T062816Z'])assert.throws(()=>c.normalizeTrace(stamp+'-'+trace));
+ for(const bad of [new Date(NaN),'2026-10-14',0,null,{getTime:()=>0}])assert.throws(()=>c.makeTimestampedTrace(trace,bad));
+ assert.equal(c.makeTimestampedTrace(trace,new Date(0)),'19700101T000000Z-'+trace);assert.equal(c.makeTimestampedTrace(trace,new Date(0xffffffff*1000)),'21060207T062815Z-'+trace);assert.throws(()=>c.makeTimestampedTrace(trace,new Date(-1)));assert.throws(()=>c.makeTimestampedTrace(trace,new Date((0xffffffff+1)*1000)));
+});
+test('OWM3 marker embeds complete timestamped IDs, preserves alpha and respects the pixel bound',()=>{
+ const id=c.makeTimestampedTrace(trace,new Date('2026-10-14T01:08:07.987Z')),im=pixels(),before=im.data.slice();c.embedTrace(im,id);const decoded=c.detectTrace(im);assert.equal(decoded.traceId,id);assert.equal(decoded.format,'OWM3');assert.equal(decoded.timestampUtc,'2026-10-14T01:08:07Z');assert.equal(decoded.timestampSeconds,Math.floor(Date.parse('2026-10-14T01:08:07Z')/1000));assert(decoded.repetitions>=3);
+ for(let i=0;i<im.data.length;i++)assert(Math.abs(im.data[i]-before[i])<=(i%4===3?0:10));
+ const metadata={...meta,traceId:id},jpg=new Uint8Array([255,216,255,217]);assert.equal(c.readMetadata(c.addJpegMetadata(jpg,metadata)).traceId,id);assert.equal(c.inspectOwnPdf(c.buildPdf([{width:512,height:512,jpeg:jpg}],metadata)).metadata.traceId,id);
+});
+test('128- and 160-bit detector candidates stay independent across mixed images and minimum capacities',async()=>{
+ const timed=c.makeTimestampedTrace(trace,new Date('2026-10-14T01:08:07Z')),cases=[[trace,160],[timed,176],[trace,512],[timed,512]];
+ await Promise.all(cases.map(async([id,side])=>{const im=pixels(side,side);c.embedTrace(im,id);const decoded=c.detectTrace(im);assert.equal(decoded.traceId,id);assert.equal(decoded.format,id===trace?'OWM2':'OWM3');}));
+ assert.throws(()=>c.embedTrace(pixels(160,160),timed),/图片太小/);const legacy=pixels(160,160);c.embedTrace(legacy,trace);assert.equal(c.detectTrace(legacy).traceId,trace);
+});
+test('OWM3 stores UTC seconds as an unsigned value including epoch and maximum supported second',()=>{
+ for(const seconds of [0,0xffffffff]){const id=c.makeTimestampedTrace(trace,new Date(seconds*1000)),im=pixels();c.embedTrace(im,id);const result=c.detectTrace(im);assert.equal(result.traceId,id);assert.equal(result.timestampSeconds,seconds);assert.equal(result.timestampUtc,new Date(seconds*1000).toISOString().replace('.000Z','Z'));}
+});
+test('CRC rejects timestamp, random-ID and checksum bit corruption in OWM3 without falling back to a false legacy ID',()=>{
+ const id=c.makeTimestampedTrace(trace,new Date('2026-10-14T01:08:07Z'));
+ for(const bit of [32,80,159]){const im=pixels();c.embedTrace(im,id);let block=0;
+  // Transposing an 8x8 block swaps the two DCT projections and reverses its
+  // encoded bit without changing any channel values or other packet bits.
+  for(let by=0;by+8<=im.height;by+=8)for(let bx=0;bx+8<=im.width;bx+=8,block++){if(block%160!==bit)continue;for(let y=0;y<8;y++)for(let x=y+1;x<8;x++)for(let channel=0;channel<4;channel++){const a=((by+y)*im.width+bx+x)*4+channel,b=((by+x)*im.width+bx+y)*4+channel,t=im.data[a];im.data[a]=im.data[b];im.data[b]=t;}}
+  assert.equal(c.detectTrace(im),null);
+ }
+});
 test('marker survives a pixel round-trip, preserves alpha and changes pixels only modestly',()=>{const im=pixels(),before=im.data.slice();c.embedTrace(im,trace);assert.equal(c.detectTrace(im).traceId,trace);let max=0,sum=0;for(let i=0;i<im.data.length;i++){const d=Math.abs(im.data[i]-before[i]);max=Math.max(max,d);sum+=d;if(i%4===3)assert.equal(d,0);}assert(max<=10);assert(sum>0);assert.equal(c.detectTrace(pixels()),null);});
 test('tiny images are refused rather than claiming trace reliability',()=>assert.throws(()=>c.embedTrace(pixels(32,32),trace)));
 test('hidden marker never changes a channel by more than 10 on saturated texture and refuses an unreadable result',()=>{const im=pixels(256,256);let seed=42;for(let i=0;i<im.data.length;i+=4){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const value=(seed>>>24)<128?0:255;im.data[i]=im.data[i+1]=im.data[i+2]=value;}const before=im.data.slice();assert.throws(()=>c.embedTrace(im,trace),/无法在画质限制内检出/);for(let i=0;i<im.data.length;i++)assert(Math.abs(im.data[i]-before[i])<=(i%4===3?0:10));assert.equal(c.detectTrace(im),null);});

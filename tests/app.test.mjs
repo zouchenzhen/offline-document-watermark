@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import * as realCore from '../src/core.mjs';
 import * as workerAssets from '../src/worker-assets.mjs';
+import * as preferences from '../src/preferences.mjs';
 import {largePdfFixture} from './large-pdf-fixture.mjs';
 import {assembleHtml} from '../scripts/build.mjs';
 
@@ -13,12 +14,16 @@ const source=fs.readFileSync(new URL('../src/app.mjs',import.meta.url),'utf8');
 const png=new Uint8Array(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf1sAAAAASUVORK5CYII=','base64'));
 const jpeg=new Uint8Array([255,216,255,217]);
 function deferred(){let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};}
+function memoryStorage(){const data=new Map();return {data,getItem:key=>data.get(key)??null,setItem:(key,value)=>data.set(key,value),removeItem:key=>data.delete(key)};}
+const exportDate=new Date('2026-10-14T01:02:03.456Z');
+function exportedId(a){return a.get('timePrefix').checked?realCore.makeTimestampedTrace(a.get('trace').value,exportDate):a.get('trace').value;}
 async function app(overrides={}){
- const counts={paint:0,embed:0,detect:0,decoded:0,released:0,liveImages:0,maxLiveImages:0},saved=[],workerScripts=[],blobs=new Map(),elements=new Map();let blobId=0;
+ const counts={paint:0,embed:0,detect:0,decoded:0,released:0,liveImages:0,maxLiveImages:0},saved=[],workerScripts=[],blobs=new Map(),elements=new Map(),windowListeners=new Map(),storage=overrides.storage||memoryStorage();let blobId=0;
  const context2d={save(){},restore(){},beginPath(){},roundRect(){},fill(){},fillRect(){},clearRect(){},rect(){},clip(){},translate(){},rotate(){},measureText(s){return {width:s.length*10};},fillText(){},arc(){},drawImage(){},getImageData(){return {width:512,height:512,data:new Uint8ClampedArray(512*512*4)};},putImageData(){}};
- const get=id=>{if(!elements.has(id))elements.set(id,{id,value:'',textContent:'',checked:false,disabled:false,hidden:false,files:[],classList:{toggle(){}},listeners:{},addEventListener(name,fn){this.listeners[name]=fn;},removeAttribute(){},getContext(){return context2d;}});return elements.get(id);};
+ const get=id=>{if(!elements.has(id))elements.set(id,{id,value:'',textContent:'',checked:false,disabled:false,hidden:false,files:[],children:[],classList:{toggle(){}},listeners:{},addEventListener(name,fn){const previous=this.listeners[name];this.listeners[name]=previous?(...args)=>{previous(...args);return fn(...args);}:fn;},append(child){this.children.push(child);},removeAttribute(){},getContext(){return context2d;}});return elements.get(id);};
  const values={mode:'add',scope:'all',text:'Only for demonstration',opacity:'42',size:'23',angle:'-24',density:'3',color:'#34475d',dpi:'300',longSide:'0',quality:'92',rx:'10',ry:'10',rw:'80',rh:'80'};
  for(const [k,v]of Object.entries(values))get(k).value=v;
+ get('timePrefix').checked=get('rememberConfig').checked=true;
  const resources={'iccs/fixture.icc':'AA==','wasm/fixture.wasm':'AA=='};
  const canonicalHtml=assembleHtml({template:fs.readFileSync(new URL('../src/index.template.html',import.meta.url),'utf8'),css:'/* synthetic style */',bundle:{licenses:{},samples:[],pdf:'',worker:Buffer.from('// fixture PDF worker').toString('base64'),workerAssets:'',assets:resources},app:source,version:realCore.VERSION});
  get('bundle').textContent=canonicalHtml.match(/<script id="bundle" type="application\/json">([\s\S]*?)<\/script>/)[1];
@@ -26,11 +31,12 @@ async function app(overrides={}){
  class ReviewURL extends URL{static createObjectURL(blob){const key='blob:review-'+(++blobId);blobs.set(key,blob);return key;}static revokeObjectURL(key){blobs.delete(key);}}
  const core={...realCore,paintWatermark(...args){counts.paint++;return realCore.paintWatermark(...args);},embedTrace(...args){counts.embed++;return overrides.embedTrace?overrides.embedTrace(...args):args[0];},detectTrace(...args){counts.detect++;return overrides.detectTrace?overrides.detectTrace(...args):null;}};
  const transformed=source.replace("const coreUrl=moduleUrl(bundle.core),core=await import(coreUrl);URL.revokeObjectURL(coreUrl);",'const core=__core;')
+  .replace('const preferencesUrl=moduleUrl(bundle.preferences),preferences=await import(preferencesUrl);URL.revokeObjectURL(preferencesUrl);','const preferences=__preferences;')
   .replace('lib=await import(url)','lib=__pdfLibrary').replace('{workerPrelude}=await import(bridgeUrl)','{workerPrelude}=__workerAssets').replace('const MAX_OUTPUT_BYTES=MAX_FILE_BYTES;','const MAX_OUTPUT_BYTES=__outputLimit;');
- const sandbox={document,location:{protocol:overrides.protocol||'https:'},crypto:globalThis.crypto,URL:ReviewURL,Blob,atob,Uint8Array,Uint8ClampedArray,TextDecoder,console,Image:class {constructor(){this.naturalWidth=overrides.imageWidth||512;this.naturalHeight=overrides.imageHeight||512;}async decode(){counts.decoded++;counts.liveImages++;counts.maxLiveImages=Math.max(counts.maxLiveImages,counts.liveImages);this.loaded=true;}removeAttribute(name){if(name==='src'&&this.loaded){counts.released++;counts.liveImages--;this.loaded=false;}}},Worker:class {constructor(url,options){this.options=options;workerScripts.push(blobs.get(url));}},__core:core,__workerAssets:workerAssets,__pdfLibrary:overrides.pdfLibrary,__outputLimit:overrides.outputLimit??160*1024*1024,
+ const sandbox={document,location:{protocol:overrides.protocol||'https:'},localStorage:storage,addEventListener:(name,fn)=>windowListeners.set(name,fn),Date:class extends Date{constructor(...args){super(...(args.length?args:[exportDate.getTime()]));}static now(){return exportDate.getTime();}},crypto:globalThis.crypto,URL:ReviewURL,Blob,atob,Uint8Array,Uint8ClampedArray,TextDecoder,console,Image:class {constructor(){this.naturalWidth=overrides.imageWidth||512;this.naturalHeight=overrides.imageHeight||512;}async decode(){counts.decoded++;counts.liveImages++;counts.maxLiveImages=Math.max(counts.maxLiveImages,counts.liveImages);this.loaded=true;}removeAttribute(name){if(name==='src'&&this.loaded){counts.released++;counts.liveImages--;this.loaded=false;}}},Worker:class {constructor(url,options){this.options=options;workerScripts.push(blobs.get(url));}},__core:core,__preferences:preferences,__workerAssets:workerAssets,__pdfLibrary:overrides.pdfLibrary,__outputLimit:overrides.outputLimit??160*1024*1024,
   setTimeout(fn,delay){const timer=setTimeout(fn,delay);if(delay===30000)timer.unref();return timer;},clearTimeout};
- await vm.runInContext('(async()=>{'+transformed+';globalThis.review={getState:()=>({total:total(),current,pdfDoc,pdfTask,sources,generation,busy,previewValid,lastRecords}),setPdf:(doc,task)=>{pdfDoc=doc;pdfTask=task;},setLibrary:p=>{pdfPromise=p;},cleanup,preview,showDemo,exportFiles,updateControls};})()',vm.createContext(sandbox));
- return {get,review:sandbox.review,counts,saved,workerScripts,resources,canonicalHtml,document};
+ await vm.runInContext('(async()=>{'+transformed+';globalThis.review={getState:()=>({total:total(),current,pdfDoc,pdfTask,sources,generation,busy,previewValid,lastRecords,sessionActive}),setPdf:(doc,task)=>{pdfDoc=doc;pdfTask=task;},setLibrary:p=>{pdfPromise=p;},cleanup,preview,showDemo,exportFiles,updateControls,persistPreferences};})()',vm.createContext(sandbox));
+ return {get,review:sandbox.review,counts,saved,workerScripts,resources,canonicalHtml,document,storage,windowListeners};
 }
 function pdfDoc({failPage=0,renderWait=null,numPages=1}={}){return {numPages,async getPage(pageNumber){return {getViewport({scale}){return {width:600*scale,height:800*scale};},render(){return {promise:pageNumber===failPage?Promise.reject(Error('fixture render failed')):renderWait||Promise.resolve()};},cleanup(){}};}};}
 function library(document){return Promise.resolve({lib:{getDocument(){return {promise:Promise.resolve(document),destroy:async()=>{}};}},EmbeddedDataFactory:class {}});}
@@ -107,7 +113,7 @@ test('JPEG and PDF exports stop before download if compressed hidden marker fail
  for(const format of ['jpg','pdf']){const a=await app();a.get('hiddenMark').checked=true;await a.review.exportFiles(format);assert.equal(a.saved.length,0);assert.equal(a.counts.embed,1);assert.equal(a.counts.detect,1);assert.match(a.get('status').textContent,/JPEG 压缩后未能确认隐藏标记/);assert.equal(a.review.getState().busy,false);}
 });
 test('JPEG marker verified against the current ID permits download and recording',async()=>{
- let expected;const a=await app({detectTrace:()=>({traceId:expected})});expected=a.get('trace').value;a.get('hiddenMark').checked=true;await a.review.exportFiles('jpg');
+ let expected;const a=await app({detectTrace:()=>({traceId:expected})});expected=exportedId(a);a.get('hiddenMark').checked=true;await a.review.exportFiles('jpg');
  assert.equal(a.saved.length,1);assert.equal(a.counts.detect,1);assert.equal(a.review.getState().lastRecords[0].traceId,expected);
 });
 test('30 large images retain source files and release each decoder before loading the next',async()=>{
@@ -133,7 +139,7 @@ test('damaged and excessive-page PDFs do not leave a partial document or locked 
  const excessive=await app();await importPdf(excessive,pdfDoc({numPages:101}));assert.match(excessive.get('status').textContent,/最多 100 页/);assert.equal(excessive.review.getState().total,0);assert.equal(excessive.get('file').disabled,false);
 });
 test('all PDF pages must pass compressed marker checking before any PDF is downloaded',async()=>{
- let id,checks=0;const a=await app({detectTrace:()=>++checks===1?{traceId:id}:null});await importPdf(a,pdfDoc({numPages:2}));id=a.get('trace').value;a.get('hiddenMark').checked=true;
+ let id,checks=0;const a=await app({detectTrace:()=>++checks===1?{traceId:id}:null});await importPdf(a,pdfDoc({numPages:2}));id=exportedId(a);a.get('hiddenMark').checked=true;
  await a.review.exportFiles('pdf');assert.equal(checks,2);assert.equal(a.saved.length,0);assert.equal(a.review.getState().lastRecords.length,0);assert.match(a.get('status').textContent,/已停止保存/);
 });
 test('local verification explains flatten metadata and serializes file operations',async()=>{
@@ -167,4 +173,47 @@ test('import and verification reject a single file above the same 160 MiB limit 
  const a=await app();let reads=0;const file={name:'too-large.pdf',type:'application/pdf',size:160*1024*1024+1,arrayBuffer:async()=>{reads++;throw Error('must not read');}};
  const input=a.get('file');input.files=[file];await input.listeners.change({target:input});assert.match(a.get('status').textContent,/单个文件超过 160 MiB/);
  const verify=a.get('verifyFile');verify.files=[file];await verify.listeners.change({target:verify});assert.match(a.get('verification').textContent,/验证文件超过 160 MiB/);assert.equal(reads,0);
+});
+
+test('selected import and verification names survive input reset and independent material changes',async()=>{
+ const a=await app(),input=a.get('file'),names=['fixture-front.png','fixture-back.png'];input.files=names.map(name=>({name,type:'image/png',size:100}));input.value='native-picker';await input.listeners.change({target:input});assert.equal(input.value,'');for(const name of names)assert(a.get('fileNames').textContent.includes(name));
+ const reading=deferred(),verify=a.get('verifyFile');verify.files=[{name:'fixture-check.png',type:'image/png',size:png.length,arrayBuffer:()=>reading.promise}];verify.value='native-picker';const pending=verify.listeners.change({target:verify});assert.equal(a.get('verifyName').textContent,'验证文件：fixture-check.png');reading.resolve(png.buffer.slice(png.byteOffset,png.byteOffset+png.byteLength));await pending;assert.equal(verify.value,'');assert.equal(a.get('verifyName').textContent,'验证文件：fixture-check.png');
+ await importPdf(a,pdfDoc());assert.equal(a.get('verifyName').textContent,'验证文件：fixture-check.png');assert.match(a.get('fileNames').textContent,/fixture\.pdf/);assert(![...a.storage.data.values()].join('').includes('fixture'));
+ await a.get('clear').onclick();assert.equal(a.get('verifyName').textContent,'尚未选择验证文件。');assert.equal(a.get('fileNames').textContent,'尚未导入文件。');
+});
+
+test('full export-time ID is identical across PDF pages, compressed checks, metadata, filename and record',async()=>{
+ let a,expected;const embedded=[];a=await app({embedTrace:(image,id)=>{embedded.push(id);return image;},detectTrace:()=>({traceId:expected})});await importPdf(a,pdfDoc({numPages:2}));a.get('hiddenMark').checked=a.get('metadata').checked=true;expected=exportedId(a);await a.review.exportFiles('pdf');
+ assert.match(expected,/^20261014T010203Z-[0-9A-F]{16}$/);assert.deepEqual(embedded,[expected,expected]);assert.equal(a.saved.length,1);assert(a.saved[0].name.includes(expected));const meta=realCore.inspectOwnPdf(new Uint8Array(await a.saved[0].blob.arrayBuffer())).metadata,record=a.review.getState().lastRecords[0];assert.equal(meta.traceId,expected);assert.equal(record.traceId,expected);assert.equal(meta.createdAt,exportDate.toISOString());assert.equal(meta.hiddenMarker,'experimental-dct-owm3');assert.equal(meta.timePrefix,true);assert.equal(a.counts.detect,2);assert(a.get('exportTrace').textContent.includes(expected));assert(![...a.storage.data.values()].join('').includes(expected));
+});
+
+test('disabling time prefix exports the original 16HEX ID with legacy marker format',async()=>{
+ let id;const a=await app({detectTrace:()=>({traceId:id})});a.get('timePrefix').checked=false;a.get('hiddenMark').checked=a.get('metadata').checked=true;id=a.get('trace').value;await a.review.exportFiles('jpg');assert.equal(a.saved.length,1);const meta=realCore.readMetadata(new Uint8Array(await a.saved[0].blob.arrayBuffer()));assert.equal(meta.traceId,id);assert.equal(meta.timePrefix,false);assert.equal(meta.hiddenMarker,'experimental-dct-v1');assert(a.saved[0].name.endsWith(id+'.jpg'));
+});
+
+test('saved settings and selected historical configuration restore while session materials and IDs do not',async()=>{
+ const storage=memoryStorage(),first=await app({storage});first.get('text').value='Synthetic remembered purpose';first.get('density').value='5';first.get('angle').value='-40';first.get('quality').value='80';first.get('dpi').value='200';first.get('timePrefix').checked=false;first.review.persistPreferences();
+ first.get('density').value='7';first.get('quality').value='92';first.review.persistPreferences();const second=await app({storage});assert.equal(second.get('text').value,'Synthetic remembered purpose');assert.equal(second.get('density').value,'7');assert.equal(second.get('angle').value,'-40');assert.equal(second.get('dpi').value,'200');assert.equal(second.get('timePrefix').checked,false);assert.notEqual(second.get('trace').value,first.get('trace').value);assert.equal(second.review.getState().lastRecords.length,0);assert.equal(second.get('verifyName').textContent,'');assert.match(second.get('fileNames').textContent,/内置虚构示例/);
+ const oldId=preferences.readPreferences(storage).history.find(entry=>entry.config.density===5).id;second.get('configHistory').value=oldId;second.get('restoreConfig').onclick();assert.equal(second.get('density').value,'5');assert.equal(second.get('quality').value,'80');second.review.persistPreferences();assert.equal(preferences.readPreferences(storage).latest.density,5);
+});
+
+test('refresh guard flushes pending preferences and prompts only after session interaction',async()=>{
+ const a=await app();let prevented=0;const event=()=>({preventDefault(){prevented++;}});a.windowListeners.get('beforeunload')(event());assert.equal(prevented,0);
+ a.get('text').value='Synthetic pending purpose';a.get('text').listeners.input();const active=event();a.windowListeners.get('beforeunload')(active);assert.equal(prevented,1);assert.equal(active.returnValue,'');assert.equal(preferences.readPreferences(a.storage).latest.text,'Synthetic pending purpose');await a.get('clear').onclick();a.windowListeners.get('beforeunload')(event());assert.equal(prevented,1);
+});
+
+test('clearing remembered settings remains disabled after a new page session',async()=>{
+ const storage=memoryStorage(),a=await app({storage});a.get('text').value='Synthetic note to forget';a.review.persistPreferences();assert([...storage.data.values()].join('').includes('Synthetic note'));a.get('clearConfig').onclick();a.get('text').value='New nonpersistent note';await a.review.exportFiles('png');const raw=[...storage.data.values()].join('');assert(!raw.includes('note'));assert.equal(preferences.readPreferences(storage).enabled,false);const fresh=await app({storage});assert.equal(fresh.get('rememberConfig').checked,false);assert.equal(fresh.get('text').value,'Only for demonstration');
+});
+
+test('clearing materials cannot drop refresh protection for unsaved settings when remembering is off',async()=>{
+ const a=await app();a.get('rememberConfig').checked=false;a.get('rememberConfig').listeners.change();a.get('text').value='Synthetic unsaved purpose';a.get('text').listeners.input();await a.get('clear').onclick();assert.equal(a.get('text').value,'Synthetic unsaved purpose');assert.equal(preferences.readPreferences(a.storage).enabled,false);let prevented=false;a.windowListeners.get('beforeunload')({preventDefault(){prevented=true;}});assert(prevented);
+});
+
+test('denied browser preference storage leaves import, export and refresh guard usable',async()=>{
+ const denied={getItem(){throw Error('Denied');},setItem(){throw Error('Denied');}},a=await app({storage:denied});assert.equal(a.get('rememberConfig').checked,false);assert.match(a.get('configStatus').textContent,/无法使用本机配置存储/);await importPdf(a,pdfDoc());await a.review.exportFiles('pdf');assert.equal(a.saved.length,1);let prevented=false;a.windowListeners.get('beforeunload')({preventDefault(){prevented=true;}});assert(prevented);
+});
+
+test('metadata-only verification explicitly differs from a surviving pixel marker',async()=>{
+ const a=await app();a.get('metadata').checked=true;await a.review.exportFiles('png');const bytes=await a.saved[0].blob.arrayBuffer(),input=a.get('verifyFile');input.files=[{name:'metadata-only.png',type:'image/png',size:bytes.byteLength,arrayBuffer:async()=>bytes}];await input.listeners.change({target:input});assert.match(a.get('verification').textContent,/元信息编号：20261014T010203Z-/);assert.match(a.get('verification').textContent,/目前只读到元信息/);assert.match(a.get('verification').textContent,/未检出有效隐藏像素标记/);
 });
