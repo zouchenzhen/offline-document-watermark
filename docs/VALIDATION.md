@@ -22,7 +22,7 @@ v0.4 新增功能尚无独立 Chrome/Edge/手机或直接双击本地 HTML 的�
 
 - HTML SHA-256：`de1d78a709713f4489ff31af76911703526b131949e39432d5d4039faddc4917`，6,414,684 字节。正式页的 Blob 按钮实际下载并核对同值；会话验证内容不进入工具下载。
 - ZIP SHA-256：`1017619828d3dcefb6f4c2f19b3111932f43f54622119b360fae829be3b0189b`，6,428,426 字节。ZIP 内清单只校验 HTML，外部清单校验 HTML 和 ZIP。
-- 正式界面截图：[桌面](interface-desktop-v0.4.jpg)、[配置与验证](interface-settings-v0.4.jpg)、[390×844 预览](interface-mobile-v0.4.jpg)。全部使用公开样本/虚构文案与编号。窄屏是内置 Chromium 的尺寸模拟；浏览器尺寸和测试页网络模拟已恢复，未改系统网络。
+- 正式界面截图：[桌面](interface-desktop-v0.4.jpg)、[配置与验证](interface-settings-v0.4.jpg)、[窄屏预览](interface-mobile-v0.4.jpg)。全部使用公开样本/虚构文案与编号。窄屏请求 390×844，DOM 页面可用宽度 375px 且没有水平溢出，保存截图为 375×812；这是内置 Chromium 的尺寸模拟。浏览器尺寸和测试页网络模拟已恢复，未改系统网络；三张截图均无 EXIF 字段。
 - 新提交仅补正式界面与文档记录，不改变已发布 HTML/ZIP。
 
 ## 用户人工验收反馈（v0.3.0，2026-10-14）
