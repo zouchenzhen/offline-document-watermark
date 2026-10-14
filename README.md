@@ -24,16 +24,25 @@
 
 ## 如何使用
 
-以下保留 v0.3 在线版的实际操作界面，使用公开身份证样本和演示追踪编号；它们不作为 v0.4 新功能的验证证据：
+以下是 v0.4 正式在线版的实际操作界面，使用明确标记 SAMPLE 的公开身份证样本，不含真实证件：
 
-![v0.3 实际操作界面](docs/interface-desktop-v0.3.jpg)
+![v0.4 实际操作界面](docs/interface-desktop-v0.4.jpg)
+
+<details>
+<summary>查看配置记忆与验证文件名界面</summary>
+
+示例验证文件和追踪记录只用于公开功能验收，没有真实接收方。原生选择框清空后，下面的独立文件名仍保持显示；元信息与隐藏像素检测分别列出。
+
+![v0.4 配置记忆与验证结果](docs/interface-settings-v0.4.jpg)
+
+</details>
 
 窄屏布局采用单列，并提供设置与预览的快捷跳转。窄屏截图是桌面 Chromium 的尺寸模拟，不是手机实机认证。
 
 <details>
 <summary>查看窄屏预览界面</summary>
 
-![v0.3 窄屏预览界面](docs/interface-mobile-v0.3.jpg)
+![v0.4 窄屏预览界面](docs/interface-mobile-v0.4.jpg)
 
 </details>
 
