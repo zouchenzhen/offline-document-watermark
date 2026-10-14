@@ -74,7 +74,7 @@ test('read discards invalid history, deduplicates snapshots, and can recover a d
  const state=readPreferences(storage);assert.equal(state.latest.text,'A');assert.equal(state.history.length,2);assert.equal(state.history[0].time,clock(2));assert.deepEqual(state.history[0].config,{text:'A'});
 });
 test('summaries are short plain strings, not interpreted markup or persisted redundant data',()=>{
- const config={mode:'flatten',density:3,quality:92,text:'<img src=x>\n'+'用途'.repeat(30)};const summary=summarizePreferences(config);assert(summary.startsWith('仅合成发送版 · 密度 3 · 质量 92% · <img src=x> '));assert(summary.endsWith('…'));assert(!summary.includes('\n'));
+ const config={mode:'flatten',density:3,quality:92,text:'<img src=x>\n'+'用途'.repeat(30)};const summary=summarizePreferences(config);assert(summary.startsWith('原页转图片 · 密度 3 · 质量 92% · <img src=x> '));assert(summary.endsWith('…'));assert(!summary.includes('\n'));
  const storage=memoryStorage();writePreferences(storage,config,{now:clock(0)});assert(!storage.values.get(PREFERENCES_STORAGE_KEY).includes('summary'));assert.equal(summarizePreferences({traceId:'FORBIDDEN'}),'无有效配置');
 });
 test('untrusted prototype keys and getters cannot enter the serialized configuration',()=>{

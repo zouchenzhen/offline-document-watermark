@@ -37,7 +37,7 @@ function updateControls(){
  ['opacity','size','angle','density','quality'].forEach(id=>$(id+'Value').textContent=$(id).value+(id==='angle'?'°':id==='opacity'||id==='quality'?'%':''));
  $('pagesBox').hidden=total()<2;$('regionBox').hidden=flatten||$('scope').value!=='custom';$('pageLabel').textContent=total()?`${current+1} / ${total()}`:'无材料';
  $('textLabel').textContent=flatten?'补充用途说明（可留空，仅写入勾选的元信息）':'用途、接收方和日期（可换行）';
- $('modeHint').textContent=flatten?'用于已经加好水印的文件：把整页现有外观合成图片型发送版，避免水印作为独立文字被直接删除；不新增可见文字。不会提取原有水印文案，也不会移除旧暗标记。隐藏标记和元信息仍可自行选择。':'添加新的用途水印，导出时与页面图像融合。';
+ $('modeHint').textContent=flatten?'把 PDF 每页的文字和已有水印一起合入图片像素，不叠加新的可见文字。点击“保存图片型 PDF”完成转换，也可保存当前页 PNG/JPEG；图片输入保留原有外观。原文字将无法选中或搜索，已有暗标记可能保留。':'添加新的用途水印，导出时与页面图像融合。';
  const locked=busy||!total()||!previewValid||(!flatten&&!$('text').value.trim());['png','jpg','pdf'].forEach(id=>$(id).disabled=locked);
  $('prev').disabled=busy||current===0;$('next').disabled=busy||current>=total()-1;$('manifest').disabled=!lastRecords.length||busy;
  $('file').disabled=$('demo').disabled=$('clear').disabled=$('sampleImages').disabled=$('samplePdf').disabled=busy;
@@ -105,7 +105,7 @@ $('verifyFile').addEventListener('change',async e=>{
  const f=e.target.files[0];if(busy||!f)return;busy=true;sessionActive=true;updateControls();$('verifyName').textContent='验证文件：'+f.name;const box=$('verification');box.textContent='正在本地验证…';try{if(f.size>MAX_FILE_BYTES)throw Error('验证文件超过 160 MiB。');const bytes=new Uint8Array(await f.arrayBuffer()),isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name);let metadata,pixelBlob;
   if(isPdf){const own=core.inspectOwnPdf(bytes);metadata=own.metadata;if(own.jpeg)pixelBlob=new Blob([own.jpeg],{type:'image/jpeg'});}else{metadata=core.readMetadata(bytes);pixelBlob=f;}
   let mark=null;if(pixelBlob){const im=await decodeImage(pixelBlob),c=document.createElement('canvas');try{if(im.naturalWidth*im.naturalHeight>24000000)throw Error('验证图片超过 2400 万像素。');c.width=im.naturalWidth;c.height=im.naturalHeight;const p=c.getContext('2d');p.drawImage(im,0,0);mark=core.detectTrace(p.getImageData(0,0,c.width,c.height));}finally{c.width=c.height=1;releaseImage(im);}}
-  const purpose=metadata?.processingMode==='flatten'?`处理方式：仅合成发送版，未提取原有水印文字。\n补充用途说明：${metadata.purposeNote||'无'}`:`用途水印：${metadata?.watermark||'无'}`;
+  const purpose=metadata?.processingMode==='flatten'?`处理方式：保留原外观转为图片，未提取原有水印文字。\n补充用途说明：${metadata.purposeNote||'无'}`:`用途水印：${metadata?.watermark||'无'}`;
   const lines=[metadata?`元信息编号：${metadata.traceId||'无'}\n${purpose}`:'未发现本工具的元信息。',mark?`隐藏像素标记编号：${mark.traceId}`:'未检出有效隐藏像素标记（可能未嵌入或已被处理破坏）。'];if(metadata&&mark)lines.push(metadata.traceId===mark.traceId?'元信息与隐藏编号一致。':'两个编号不一致，请核对原始记录。');if(metadata&&!mark)lines.push('目前只读到元信息；不能据此确认隐藏像素标记仍有效。');if(isPdf)lines.push('像素验证仅覆盖本工具 PDF 格式的第一页。');lines.push('可将编号与自己保存的接收方记录核对；它不是文件真实性认证，也不能单独证明由谁传播。');box.textContent=lines.join('\n\n');
  }catch(err){box.textContent='验证失败：'+err.message;}finally{busy=false;e.target.value='';updateControls();}
 });

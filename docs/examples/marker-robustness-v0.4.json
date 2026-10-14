@@ -1,0 +1,2327 @@
+{
+  "schema": 1,
+  "version": "0.4.0",
+  "generatedAt": "2026-10-14T03:59:39.003Z",
+  "codecs": {
+    "pillow": "12.3.0",
+    "jpeg": "8.0",
+    "libjpegTurbo": "3.1.4.1"
+  },
+  "method": {
+    "metadataUsedForDetection": false,
+    "visibleWatermarkAdded": false,
+    "rasterization": "Pillow EXIF orientation applied; RGBA composited onto opaque white",
+    "baseline": "PNG lossless encode/decode; demo metadata written but never consulted by detector",
+    "jpeg": "Pillow JPEG, 4:2:0, nonprogressive, optimize=false",
+    "parameters": "All dimensions and editing operations are recorded per result",
+    "derivedDirectory": "test-output/marker-robustness-v0.4",
+    "ids": {
+      "OWM2": "12AB34CD56EF7890",
+      "OWM3": "20261014T010807Z-12AB34CD56EF7890"
+    },
+    "metadataAssertions": "Separate setup checks confirm baseline/demo metadata present and stripped metadata absent; metadata never enters detectTrace."
+  },
+  "edits": [
+    "png-resave",
+    "metadata-strip",
+    "jpeg-92",
+    "jpeg-80",
+    "jpeg-60",
+    "brightness-105",
+    "brightness-95",
+    "contrast-105",
+    "contrast-95",
+    "flip-horizontal",
+    "flip-vertical",
+    "rotate-90",
+    "resize-75",
+    "resize-50",
+    "edge-crop-3",
+    "edge-crop-8",
+    "center-crop-90",
+    "center-crop-75"
+  ],
+  "samples": [
+    {
+      "name": "id-card",
+      "source": "docs/examples/id-card-input.png",
+      "sourceSha256": "0123ebbe211faa6642b8bb7d1238d6e794d7ca6057f6578310dba811f5976b98",
+      "width": 960,
+      "height": 1219,
+      "trials": [
+        {
+          "format": "OWM2",
+          "traceId": "12AB34CD56EF7890",
+          "embeddingSucceeded": true,
+          "baselineSucceeded": true,
+          "embeddingError": null,
+          "embeddingDelta": {
+            "maxRgbChannelChange": 10,
+            "meanAbsoluteRgbChannelChange": 1.538095889162337,
+            "alphaChanged": false
+          },
+          "results": [
+            {
+              "edit": "baseline-png",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 1949011,
+              "operation": null,
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "png-resave",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 1949011,
+              "operation": {
+                "type": "png-resave",
+                "textMetadata": "preserved"
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "metadata-strip",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 1948836,
+              "operation": {
+                "type": "metadata-strip",
+                "metadata": "omitted: text, EXIF, ICC"
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-92",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 336215,
+              "operation": {
+                "type": "jpeg-92",
+                "quality": 92,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-80",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 216128,
+              "operation": {
+                "type": "jpeg-80",
+                "quality": 80,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-60",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 152544,
+              "operation": {
+                "type": "jpeg-60",
+                "quality": 60,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "brightness-105",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 2019291,
+              "operation": {
+                "type": "brightness-105",
+                "factor": 1.05
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "brightness-95",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 1967939,
+              "operation": {
+                "type": "brightness-95",
+                "factor": 0.95
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "contrast-105",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 2033644,
+              "operation": {
+                "type": "contrast-105",
+                "factor": 1.05
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "contrast-95",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 1969943,
+              "operation": {
+                "type": "contrast-95",
+                "factor": 0.95
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "flip-horizontal",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 1932155,
+              "operation": {
+                "type": "flip-horizontal"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "flip-vertical",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 1931748,
+              "operation": {
+                "type": "flip-vertical"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "rotate-90",
+              "width": 1219,
+              "height": 960,
+              "encodedBytes": 1937719,
+              "operation": {
+                "type": "rotate-90",
+                "angle": "90 degrees counterclockwise; no interpolation"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "resize-75",
+              "width": 720,
+              "height": 914,
+              "encodedBytes": 1242582,
+              "operation": {
+                "type": "resize-75",
+                "ratio": 0.75,
+                "resampling": "Lanczos",
+                "dimensions": [
+                  720,
+                  914
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "resize-50",
+              "width": 480,
+              "height": 610,
+              "encodedBytes": 606341,
+              "operation": {
+                "type": "resize-50",
+                "ratio": 0.5,
+                "resampling": "Lanczos",
+                "dimensions": [
+                  480,
+                  610
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "edge-crop-3",
+              "width": 954,
+              "height": 1213,
+              "encodedBytes": 1934796,
+              "operation": {
+                "type": "edge-crop-3",
+                "box": [
+                  3,
+                  3,
+                  957,
+                  1216
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "edge-crop-8",
+              "width": 944,
+              "height": 1203,
+              "encodedBytes": 1903916,
+              "operation": {
+                "type": "edge-crop-8",
+                "box": [
+                  8,
+                  8,
+                  952,
+                  1211
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "center-crop-90",
+              "width": 864,
+              "height": 1097,
+              "encodedBytes": 1585450,
+              "operation": {
+                "type": "center-crop-90",
+                "ratio": 0.9,
+                "box": [
+                  48,
+                  61,
+                  912,
+                  1158
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "center-crop-75",
+              "width": 720,
+              "height": 914,
+              "encodedBytes": 1089767,
+              "operation": {
+                "type": "center-crop-75",
+                "ratio": 0.75,
+                "box": [
+                  120,
+                  152,
+                  840,
+                  1066
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            }
+          ],
+          "alignedTopCrop": {
+            "selectionRule": {
+              "columns": 120,
+              "bits": 128,
+              "blockRows": 16,
+              "topPixels": 128,
+              "maxHeightFraction": 0.5,
+              "minRemainingBlocks": 384
+            },
+            "skipped": false,
+            "result": {
+              "edit": "phase-aligned-top-crop",
+              "width": 960,
+              "height": 1091,
+              "encodedBytes": 1738092,
+              "operation": {
+                "type": "top-aligned-128",
+                "box": [
+                  0,
+                  128,
+                  960,
+                  1219
+                ]
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            }
+          },
+          "metadataChecks": {
+            "baselineContainsDemoMetadata": true,
+            "strippedMetadataAbsent": true,
+            "losslessResavePreservesDemoMetadata": true
+          }
+        },
+        {
+          "format": "OWM3",
+          "traceId": "20261014T010807Z-12AB34CD56EF7890",
+          "embeddingSucceeded": true,
+          "baselineSucceeded": true,
+          "embeddingError": null,
+          "embeddingDelta": {
+            "maxRgbChannelChange": 10,
+            "meanAbsoluteRgbChannelChange": 1.5255941801112023,
+            "alphaChanged": false
+          },
+          "results": [
+            {
+              "edit": "baseline-png",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 1947927,
+              "operation": null,
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "png-resave",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 1947927,
+              "operation": {
+                "type": "png-resave",
+                "textMetadata": "preserved"
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "metadata-strip",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 1947735,
+              "operation": {
+                "type": "metadata-strip",
+                "metadata": "omitted: text, EXIF, ICC"
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-92",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 336187,
+              "operation": {
+                "type": "jpeg-92",
+                "quality": 92,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-80",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 216175,
+              "operation": {
+                "type": "jpeg-80",
+                "quality": 80,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-60",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 152557,
+              "operation": {
+                "type": "jpeg-60",
+                "quality": 60,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "brightness-105",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 2018031,
+              "operation": {
+                "type": "brightness-105",
+                "factor": 1.05
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "brightness-95",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 1966042,
+              "operation": {
+                "type": "brightness-95",
+                "factor": 0.95
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "contrast-105",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 2031395,
+              "operation": {
+                "type": "contrast-105",
+                "factor": 1.05
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "contrast-95",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 1968604,
+              "operation": {
+                "type": "contrast-95",
+                "factor": 0.95
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "flip-horizontal",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 1931892,
+              "operation": {
+                "type": "flip-horizontal"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "flip-vertical",
+              "width": 960,
+              "height": 1219,
+              "encodedBytes": 1930411,
+              "operation": {
+                "type": "flip-vertical"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "rotate-90",
+              "width": 1219,
+              "height": 960,
+              "encodedBytes": 1936484,
+              "operation": {
+                "type": "rotate-90",
+                "angle": "90 degrees counterclockwise; no interpolation"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "resize-75",
+              "width": 720,
+              "height": 914,
+              "encodedBytes": 1241659,
+              "operation": {
+                "type": "resize-75",
+                "ratio": 0.75,
+                "resampling": "Lanczos",
+                "dimensions": [
+                  720,
+                  914
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "resize-50",
+              "width": 480,
+              "height": 610,
+              "encodedBytes": 605836,
+              "operation": {
+                "type": "resize-50",
+                "ratio": 0.5,
+                "resampling": "Lanczos",
+                "dimensions": [
+                  480,
+                  610
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "edge-crop-3",
+              "width": 954,
+              "height": 1213,
+              "encodedBytes": 1933490,
+              "operation": {
+                "type": "edge-crop-3",
+                "box": [
+                  3,
+                  3,
+                  957,
+                  1216
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "edge-crop-8",
+              "width": 944,
+              "height": 1203,
+              "encodedBytes": 1901746,
+              "operation": {
+                "type": "edge-crop-8",
+                "box": [
+                  8,
+                  8,
+                  952,
+                  1211
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "center-crop-90",
+              "width": 864,
+              "height": 1097,
+              "encodedBytes": 1583941,
+              "operation": {
+                "type": "center-crop-90",
+                "ratio": 0.9,
+                "box": [
+                  48,
+                  61,
+                  912,
+                  1158
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "center-crop-75",
+              "width": 720,
+              "height": 914,
+              "encodedBytes": 1088764,
+              "operation": {
+                "type": "center-crop-75",
+                "ratio": 0.75,
+                "box": [
+                  120,
+                  152,
+                  840,
+                  1066
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            }
+          ],
+          "alignedTopCrop": {
+            "selectionRule": {
+              "columns": 120,
+              "bits": 160,
+              "blockRows": 4,
+              "topPixels": 32,
+              "maxHeightFraction": 0.5,
+              "minRemainingBlocks": 480
+            },
+            "skipped": false,
+            "result": {
+              "edit": "phase-aligned-top-crop",
+              "width": 960,
+              "height": 1187,
+              "encodedBytes": 1900672,
+              "operation": {
+                "type": "top-aligned-32",
+                "box": [
+                  0,
+                  32,
+                  960,
+                  1219
+                ]
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            }
+          },
+          "metadataChecks": {
+            "baselineContainsDemoMetadata": true,
+            "strippedMetadataAbsent": true,
+            "losslessResavePreservesDemoMetadata": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "screenshot",
+      "source": "docs/examples/screenshot-input.png",
+      "sourceSha256": "eb159f3649e97d27eb8cade673eaa158c2b47197549b08ca0f701afac182905f",
+      "width": 1920,
+      "height": 860,
+      "trials": [
+        {
+          "format": "OWM2",
+          "traceId": "12AB34CD56EF7890",
+          "embeddingSucceeded": true,
+          "baselineSucceeded": true,
+          "embeddingError": null,
+          "embeddingDelta": {
+            "maxRgbChannelChange": 10,
+            "meanAbsoluteRgbChannelChange": 0.8328193636950905,
+            "alphaChanged": false
+          },
+          "results": [
+            {
+              "edit": "baseline-png",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 228530,
+              "operation": null,
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "png-resave",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 228530,
+              "operation": {
+                "type": "png-resave",
+                "textMetadata": "preserved"
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "metadata-strip",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 228355,
+              "operation": {
+                "type": "metadata-strip",
+                "metadata": "omitted: text, EXIF, ICC"
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-92",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 163653,
+              "operation": {
+                "type": "jpeg-92",
+                "quality": 92,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-80",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 129334,
+              "operation": {
+                "type": "jpeg-80",
+                "quality": 80,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-60",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 67564,
+              "operation": {
+                "type": "jpeg-60",
+                "quality": 60,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "brightness-105",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 131335,
+              "operation": {
+                "type": "brightness-105",
+                "factor": 1.05
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "brightness-95",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 240898,
+              "operation": {
+                "type": "brightness-95",
+                "factor": 0.95
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "contrast-105",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 236762,
+              "operation": {
+                "type": "contrast-105",
+                "factor": 1.05
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "contrast-95",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 235078,
+              "operation": {
+                "type": "contrast-95",
+                "factor": 0.95
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "flip-horizontal",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 226554,
+              "operation": {
+                "type": "flip-horizontal"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "flip-vertical",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 225286,
+              "operation": {
+                "type": "flip-vertical"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "rotate-90",
+              "width": 860,
+              "height": 1920,
+              "encodedBytes": 221103,
+              "operation": {
+                "type": "rotate-90",
+                "angle": "90 degrees counterclockwise; no interpolation"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "resize-75",
+              "width": 1440,
+              "height": 645,
+              "encodedBytes": 216175,
+              "operation": {
+                "type": "resize-75",
+                "ratio": 0.75,
+                "resampling": "Lanczos",
+                "dimensions": [
+                  1440,
+                  645
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "resize-50",
+              "width": 960,
+              "height": 430,
+              "encodedBytes": 130506,
+              "operation": {
+                "type": "resize-50",
+                "ratio": 0.5,
+                "resampling": "Lanczos",
+                "dimensions": [
+                  960,
+                  430
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "edge-crop-3",
+              "width": 1914,
+              "height": 854,
+              "encodedBytes": 226336,
+              "operation": {
+                "type": "edge-crop-3",
+                "box": [
+                  3,
+                  3,
+                  1917,
+                  857
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "edge-crop-8",
+              "width": 1904,
+              "height": 844,
+              "encodedBytes": 221129,
+              "operation": {
+                "type": "edge-crop-8",
+                "box": [
+                  8,
+                  8,
+                  1912,
+                  852
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "center-crop-90",
+              "width": 1728,
+              "height": 774,
+              "encodedBytes": 188930,
+              "operation": {
+                "type": "center-crop-90",
+                "ratio": 0.9,
+                "box": [
+                  96,
+                  43,
+                  1824,
+                  817
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "center-crop-75",
+              "width": 1440,
+              "height": 645,
+              "encodedBytes": 136700,
+              "operation": {
+                "type": "center-crop-75",
+                "ratio": 0.75,
+                "box": [
+                  240,
+                  107,
+                  1680,
+                  752
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            }
+          ],
+          "alignedTopCrop": {
+            "selectionRule": {
+              "columns": 240,
+              "bits": 128,
+              "blockRows": 8,
+              "topPixels": 64,
+              "maxHeightFraction": 0.5,
+              "minRemainingBlocks": 384
+            },
+            "skipped": false,
+            "result": {
+              "edit": "phase-aligned-top-crop",
+              "width": 1920,
+              "height": 796,
+              "encodedBytes": 208217,
+              "operation": {
+                "type": "top-aligned-64",
+                "box": [
+                  0,
+                  64,
+                  1920,
+                  860
+                ]
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            }
+          },
+          "metadataChecks": {
+            "baselineContainsDemoMetadata": true,
+            "strippedMetadataAbsent": true,
+            "losslessResavePreservesDemoMetadata": true
+          }
+        },
+        {
+          "format": "OWM3",
+          "traceId": "20261014T010807Z-12AB34CD56EF7890",
+          "embeddingSucceeded": true,
+          "baselineSucceeded": true,
+          "embeddingError": null,
+          "embeddingDelta": {
+            "maxRgbChannelChange": 10,
+            "meanAbsoluteRgbChannelChange": 0.8339546996124031,
+            "alphaChanged": false
+          },
+          "results": [
+            {
+              "edit": "baseline-png",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 231826,
+              "operation": null,
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "png-resave",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 231826,
+              "operation": {
+                "type": "png-resave",
+                "textMetadata": "preserved"
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "metadata-strip",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 231634,
+              "operation": {
+                "type": "metadata-strip",
+                "metadata": "omitted: text, EXIF, ICC"
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-92",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 163863,
+              "operation": {
+                "type": "jpeg-92",
+                "quality": 92,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-80",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 129123,
+              "operation": {
+                "type": "jpeg-80",
+                "quality": 80,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-60",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 67523,
+              "operation": {
+                "type": "jpeg-60",
+                "quality": 60,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "brightness-105",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 132007,
+              "operation": {
+                "type": "brightness-105",
+                "factor": 1.05
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "brightness-95",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 244628,
+              "operation": {
+                "type": "brightness-95",
+                "factor": 0.95
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "contrast-105",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 240343,
+              "operation": {
+                "type": "contrast-105",
+                "factor": 1.05
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "contrast-95",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 238751,
+              "operation": {
+                "type": "contrast-95",
+                "factor": 0.95
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "flip-horizontal",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 226925,
+              "operation": {
+                "type": "flip-horizontal"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "flip-vertical",
+              "width": 1920,
+              "height": 860,
+              "encodedBytes": 229958,
+              "operation": {
+                "type": "flip-vertical"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "rotate-90",
+              "width": 860,
+              "height": 1920,
+              "encodedBytes": 189340,
+              "operation": {
+                "type": "rotate-90",
+                "angle": "90 degrees counterclockwise; no interpolation"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "resize-75",
+              "width": 1440,
+              "height": 645,
+              "encodedBytes": 221923,
+              "operation": {
+                "type": "resize-75",
+                "ratio": 0.75,
+                "resampling": "Lanczos",
+                "dimensions": [
+                  1440,
+                  645
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "resize-50",
+              "width": 960,
+              "height": 430,
+              "encodedBytes": 130073,
+              "operation": {
+                "type": "resize-50",
+                "ratio": 0.5,
+                "resampling": "Lanczos",
+                "dimensions": [
+                  960,
+                  430
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "edge-crop-3",
+              "width": 1914,
+              "height": 854,
+              "encodedBytes": 230533,
+              "operation": {
+                "type": "edge-crop-3",
+                "box": [
+                  3,
+                  3,
+                  1917,
+                  857
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "edge-crop-8",
+              "width": 1904,
+              "height": 844,
+              "encodedBytes": 224580,
+              "operation": {
+                "type": "edge-crop-8",
+                "box": [
+                  8,
+                  8,
+                  1912,
+                  852
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "center-crop-90",
+              "width": 1728,
+              "height": 774,
+              "encodedBytes": 192155,
+              "operation": {
+                "type": "center-crop-90",
+                "ratio": 0.9,
+                "box": [
+                  96,
+                  43,
+                  1824,
+                  817
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "center-crop-75",
+              "width": 1440,
+              "height": 645,
+              "encodedBytes": 140577,
+              "operation": {
+                "type": "center-crop-75",
+                "ratio": 0.75,
+                "box": [
+                  240,
+                  107,
+                  1680,
+                  752
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            }
+          ],
+          "alignedTopCrop": {
+            "selectionRule": {
+              "columns": 240,
+              "bits": 160,
+              "blockRows": 2,
+              "topPixels": 16,
+              "maxHeightFraction": 0.5,
+              "minRemainingBlocks": 480
+            },
+            "skipped": false,
+            "result": {
+              "edit": "phase-aligned-top-crop",
+              "width": 1920,
+              "height": 844,
+              "encodedBytes": 229145,
+              "operation": {
+                "type": "top-aligned-16",
+                "box": [
+                  0,
+                  16,
+                  1920,
+                  860
+                ]
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            }
+          },
+          "metadataChecks": {
+            "baselineContainsDemoMetadata": true,
+            "strippedMetadataAbsent": true,
+            "losslessResavePreservesDemoMetadata": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "synthetic-scan",
+      "source": "tests/fixtures/synthetic-scan.jpg",
+      "sourceSha256": "a8f2b28e1b461067648db212ae10de2bfeb8d1495b43e5564d604e2213256103",
+      "width": 384,
+      "height": 256,
+      "trials": [
+        {
+          "format": "OWM2",
+          "traceId": "12AB34CD56EF7890",
+          "embeddingSucceeded": true,
+          "baselineSucceeded": true,
+          "embeddingError": null,
+          "embeddingDelta": {
+            "maxRgbChannelChange": 10,
+            "meanAbsoluteRgbChannelChange": 0.9802042643229166,
+            "alphaChanged": false
+          },
+          "results": [
+            {
+              "edit": "baseline-png",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 32058,
+              "operation": null,
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "png-resave",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 32058,
+              "operation": {
+                "type": "png-resave",
+                "textMetadata": "preserved"
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "metadata-strip",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 31883,
+              "operation": {
+                "type": "metadata-strip",
+                "metadata": "omitted: text, EXIF, ICC"
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-92",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 18805,
+              "operation": {
+                "type": "jpeg-92",
+                "quality": 92,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-80",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 14789,
+              "operation": {
+                "type": "jpeg-80",
+                "quality": 80,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-60",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 10320,
+              "operation": {
+                "type": "jpeg-60",
+                "quality": 60,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "brightness-105",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 20092,
+              "operation": {
+                "type": "brightness-105",
+                "factor": 1.05
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "brightness-95",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 33883,
+              "operation": {
+                "type": "brightness-95",
+                "factor": 0.95
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "contrast-105",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 24735,
+              "operation": {
+                "type": "contrast-105",
+                "factor": 1.05
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "contrast-95",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 34640,
+              "operation": {
+                "type": "contrast-95",
+                "factor": 0.95
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            },
+            {
+              "edit": "flip-horizontal",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 32427,
+              "operation": {
+                "type": "flip-horizontal"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "flip-vertical",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 32496,
+              "operation": {
+                "type": "flip-vertical"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "rotate-90",
+              "width": 256,
+              "height": 384,
+              "encodedBytes": 40525,
+              "operation": {
+                "type": "rotate-90",
+                "angle": "90 degrees counterclockwise; no interpolation"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "resize-75",
+              "width": 288,
+              "height": 192,
+              "encodedBytes": 27201,
+              "operation": {
+                "type": "resize-75",
+                "ratio": 0.75,
+                "resampling": "Lanczos",
+                "dimensions": [
+                  288,
+                  192
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "resize-50",
+              "width": 192,
+              "height": 128,
+              "encodedBytes": 15746,
+              "operation": {
+                "type": "resize-50",
+                "ratio": 0.5,
+                "resampling": "Lanczos",
+                "dimensions": [
+                  192,
+                  128
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "edge-crop-3",
+              "width": 378,
+              "height": 250,
+              "encodedBytes": 31737,
+              "operation": {
+                "type": "edge-crop-3",
+                "box": [
+                  3,
+                  3,
+                  381,
+                  253
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "edge-crop-8",
+              "width": 368,
+              "height": 240,
+              "encodedBytes": 30863,
+              "operation": {
+                "type": "edge-crop-8",
+                "box": [
+                  8,
+                  8,
+                  376,
+                  248
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "center-crop-90",
+              "width": 346,
+              "height": 230,
+              "encodedBytes": 28352,
+              "operation": {
+                "type": "center-crop-90",
+                "ratio": 0.9,
+                "box": [
+                  19,
+                  13,
+                  365,
+                  243
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "center-crop-75",
+              "width": 288,
+              "height": 192,
+              "encodedBytes": 17560,
+              "operation": {
+                "type": "center-crop-75",
+                "ratio": 0.75,
+                "box": [
+                  48,
+                  32,
+                  336,
+                  224
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            }
+          ],
+          "alignedTopCrop": {
+            "selectionRule": {
+              "columns": 48,
+              "bits": 128,
+              "blockRows": 8,
+              "topPixels": 64,
+              "maxHeightFraction": 0.5,
+              "minRemainingBlocks": 384
+            },
+            "skipped": false,
+            "result": {
+              "edit": "phase-aligned-top-crop",
+              "width": 384,
+              "height": 192,
+              "encodedBytes": 22389,
+              "operation": {
+                "type": "top-aligned-64",
+                "box": [
+                  0,
+                  64,
+                  384,
+                  256
+                ]
+              },
+              "detectedTraceId": "12AB34CD56EF7890",
+              "detectedFormat": "OWM2",
+              "exactMatch": true
+            }
+          },
+          "metadataChecks": {
+            "baselineContainsDemoMetadata": true,
+            "strippedMetadataAbsent": true,
+            "losslessResavePreservesDemoMetadata": true
+          }
+        },
+        {
+          "format": "OWM3",
+          "traceId": "20261014T010807Z-12AB34CD56EF7890",
+          "embeddingSucceeded": true,
+          "baselineSucceeded": true,
+          "embeddingError": null,
+          "embeddingDelta": {
+            "maxRgbChannelChange": 10,
+            "meanAbsoluteRgbChannelChange": 0.9533420138888888,
+            "alphaChanged": false
+          },
+          "results": [
+            {
+              "edit": "baseline-png",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 31897,
+              "operation": null,
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "png-resave",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 31897,
+              "operation": {
+                "type": "png-resave",
+                "textMetadata": "preserved"
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "metadata-strip",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 31705,
+              "operation": {
+                "type": "metadata-strip",
+                "metadata": "omitted: text, EXIF, ICC"
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-92",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 18825,
+              "operation": {
+                "type": "jpeg-92",
+                "quality": 92,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-80",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 14774,
+              "operation": {
+                "type": "jpeg-80",
+                "quality": 80,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "jpeg-60",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 10370,
+              "operation": {
+                "type": "jpeg-60",
+                "quality": 60,
+                "subsampling": "4:2:0",
+                "progressive": false
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "brightness-105",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 19666,
+              "operation": {
+                "type": "brightness-105",
+                "factor": 1.05
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "brightness-95",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 33714,
+              "operation": {
+                "type": "brightness-95",
+                "factor": 0.95
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "contrast-105",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 24160,
+              "operation": {
+                "type": "contrast-105",
+                "factor": 1.05
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "contrast-95",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 34895,
+              "operation": {
+                "type": "contrast-95",
+                "factor": 0.95
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            },
+            {
+              "edit": "flip-horizontal",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 31940,
+              "operation": {
+                "type": "flip-horizontal"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "flip-vertical",
+              "width": 384,
+              "height": 256,
+              "encodedBytes": 32268,
+              "operation": {
+                "type": "flip-vertical"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "rotate-90",
+              "width": 256,
+              "height": 384,
+              "encodedBytes": 40531,
+              "operation": {
+                "type": "rotate-90",
+                "angle": "90 degrees counterclockwise; no interpolation"
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "resize-75",
+              "width": 288,
+              "height": 192,
+              "encodedBytes": 27076,
+              "operation": {
+                "type": "resize-75",
+                "ratio": 0.75,
+                "resampling": "Lanczos",
+                "dimensions": [
+                  288,
+                  192
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "resize-50",
+              "width": 192,
+              "height": 128,
+              "encodedBytes": 15704,
+              "operation": {
+                "type": "resize-50",
+                "ratio": 0.5,
+                "resampling": "Lanczos",
+                "dimensions": [
+                  192,
+                  128
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "edge-crop-3",
+              "width": 378,
+              "height": 250,
+              "encodedBytes": 31416,
+              "operation": {
+                "type": "edge-crop-3",
+                "box": [
+                  3,
+                  3,
+                  381,
+                  253
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "edge-crop-8",
+              "width": 368,
+              "height": 240,
+              "encodedBytes": 30310,
+              "operation": {
+                "type": "edge-crop-8",
+                "box": [
+                  8,
+                  8,
+                  376,
+                  248
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "center-crop-90",
+              "width": 346,
+              "height": 230,
+              "encodedBytes": 28246,
+              "operation": {
+                "type": "center-crop-90",
+                "ratio": 0.9,
+                "box": [
+                  19,
+                  13,
+                  365,
+                  243
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            },
+            {
+              "edit": "center-crop-75",
+              "width": 288,
+              "height": 192,
+              "encodedBytes": 17891,
+              "operation": {
+                "type": "center-crop-75",
+                "ratio": 0.75,
+                "box": [
+                  48,
+                  32,
+                  336,
+                  224
+                ]
+              },
+              "detectedTraceId": null,
+              "detectedFormat": null,
+              "exactMatch": false
+            }
+          ],
+          "alignedTopCrop": {
+            "selectionRule": {
+              "columns": 48,
+              "bits": 160,
+              "blockRows": 10,
+              "topPixels": 80,
+              "maxHeightFraction": 0.5,
+              "minRemainingBlocks": 480
+            },
+            "skipped": false,
+            "result": {
+              "edit": "phase-aligned-top-crop",
+              "width": 384,
+              "height": 176,
+              "encodedBytes": 19258,
+              "operation": {
+                "type": "top-aligned-80",
+                "box": [
+                  0,
+                  80,
+                  384,
+                  256
+                ]
+              },
+              "detectedTraceId": "20261014T010807Z-12AB34CD56EF7890",
+              "detectedFormat": "OWM3",
+              "exactMatch": true
+            }
+          },
+          "metadataChecks": {
+            "baselineContainsDemoMetadata": true,
+            "strippedMetadataAbsent": true,
+            "losslessResavePreservesDemoMetadata": true
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "attemptedBaselines": 6,
+    "eligibleBaselines": 6,
+    "excludedBaselines": [],
+    "byEdit": [
+      {
+        "edit": "baseline-png",
+        "tested": 6,
+        "exactMatches": 6,
+        "rate": 1,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 3
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 3
+        }
+      },
+      {
+        "edit": "png-resave",
+        "tested": 6,
+        "exactMatches": 6,
+        "rate": 1,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 3
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 3
+        }
+      },
+      {
+        "edit": "metadata-strip",
+        "tested": 6,
+        "exactMatches": 6,
+        "rate": 1,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 3
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 3
+        }
+      },
+      {
+        "edit": "jpeg-92",
+        "tested": 6,
+        "exactMatches": 6,
+        "rate": 1,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 3
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 3
+        }
+      },
+      {
+        "edit": "jpeg-80",
+        "tested": 6,
+        "exactMatches": 6,
+        "rate": 1,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 3
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 3
+        }
+      },
+      {
+        "edit": "jpeg-60",
+        "tested": 6,
+        "exactMatches": 4,
+        "rate": 0.6666666666666666,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 2
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 2
+        }
+      },
+      {
+        "edit": "brightness-105",
+        "tested": 6,
+        "exactMatches": 4,
+        "rate": 0.6666666666666666,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 2
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 2
+        }
+      },
+      {
+        "edit": "brightness-95",
+        "tested": 6,
+        "exactMatches": 6,
+        "rate": 1,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 3
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 3
+        }
+      },
+      {
+        "edit": "contrast-105",
+        "tested": 6,
+        "exactMatches": 4,
+        "rate": 0.6666666666666666,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 2
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 2
+        }
+      },
+      {
+        "edit": "contrast-95",
+        "tested": 6,
+        "exactMatches": 6,
+        "rate": 1,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 3
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 3
+        }
+      },
+      {
+        "edit": "flip-horizontal",
+        "tested": 6,
+        "exactMatches": 0,
+        "rate": 0,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 0
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 0
+        }
+      },
+      {
+        "edit": "flip-vertical",
+        "tested": 6,
+        "exactMatches": 0,
+        "rate": 0,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 0
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 0
+        }
+      },
+      {
+        "edit": "rotate-90",
+        "tested": 6,
+        "exactMatches": 0,
+        "rate": 0,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 0
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 0
+        }
+      },
+      {
+        "edit": "resize-75",
+        "tested": 6,
+        "exactMatches": 0,
+        "rate": 0,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 0
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 0
+        }
+      },
+      {
+        "edit": "resize-50",
+        "tested": 6,
+        "exactMatches": 0,
+        "rate": 0,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 0
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 0
+        }
+      },
+      {
+        "edit": "edge-crop-3",
+        "tested": 6,
+        "exactMatches": 0,
+        "rate": 0,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 0
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 0
+        }
+      },
+      {
+        "edit": "edge-crop-8",
+        "tested": 6,
+        "exactMatches": 0,
+        "rate": 0,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 0
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 0
+        }
+      },
+      {
+        "edit": "center-crop-90",
+        "tested": 6,
+        "exactMatches": 0,
+        "rate": 0,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 0
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 0
+        }
+      },
+      {
+        "edit": "center-crop-75",
+        "tested": 6,
+        "exactMatches": 0,
+        "rate": 0,
+        "OWM2": {
+          "tested": 3,
+          "exactMatches": 0
+        },
+        "OWM3": {
+          "tested": 3,
+          "exactMatches": 0
+        }
+      }
+    ],
+    "extraAlignedTopCrop": {
+      "separateFromMainMatrix": true,
+      "rule": "crop top 8 * bits/gcd(bits,floor(width/8)) pixels, preserving width; skip above half height or below three repetitions",
+      "tested": 6,
+      "exactMatches": 6,
+      "skipped": 0
+    }
+  },
+  "testedCore": {
+    "source": "src/core.mjs",
+    "version": "0.4.0",
+    "sourceSha256": "b644fccf6fd4ae4c1e518dbef9876dbc4900eab1acb0a9462ad64213443e3c1b",
+    "normalizedLfSha256": "b644fccf6fd4ae4c1e518dbef9876dbc4900eab1acb0a9462ad64213443e3c1b"
+  }
+}
