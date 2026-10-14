@@ -203,7 +203,7 @@ test('refresh guard flushes pending preferences and prompts only after session i
 });
 
 test('clearing remembered settings remains disabled after a new page session',async()=>{
- const storage=memoryStorage(),a=await app({storage});a.get('text').value='Synthetic note to forget';a.review.persistPreferences();assert([...storage.data.values()].join('').includes('Synthetic note'));a.get('clearConfig').onclick();a.get('text').value='New nonpersistent note';await a.review.exportFiles('png');const raw=[...storage.data.values()].join('');assert(!raw.includes('note'));assert.equal(preferences.readPreferences(storage).enabled,false);const fresh=await app({storage});assert.equal(fresh.get('rememberConfig').checked,false);assert.equal(fresh.get('text').value,'Only for demonstration');
+ const storage=memoryStorage(),a=await app({storage});a.get('text').value='Synthetic note to forget';a.review.persistPreferences();assert([...storage.data.values()].join('').includes('Synthetic note'));a.get('clearConfig').onclick();a.get('text').value='New nonpersistent note';await a.review.exportFiles('png');const raw=[...storage.data.values()].join('');assert(!raw.includes('note'));assert.equal(preferences.readPreferences(storage).enabled,false);const fresh=await app({storage});assert.equal(fresh.get('rememberConfig').checked,false);assert.equal(fresh.get('text').value,'Only for demonstration');assert.match(fresh.get('configStatus').textContent,/记住配置已关闭/);
 });
 
 test('clearing materials cannot drop refresh protection for unsaved settings when remembering is off',async()=>{
